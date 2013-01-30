@@ -1,14 +1,29 @@
 #!/usr/bin/env python3
 
 class Line:
+    @property
+    def base(self):
+        if self.sublevels:
+            return self.sublevels[0]
+        return self.indent
+
+    @property
+    def levels(self):
+        return self.sublevels + [self.indent]
+    
     def __init__(self, line):
         self.continues = line.lstrip().startswith(". ")
         if self.continues:
             self.content = line.lstrip()[2:].lstrip()
         else:
             self.content = line.lstrip()
+        # the indentation of the code
         self.indent = len(line) - len(line.lstrip())
+        # due to : vertical space optimization, the line can have multiple sublevels
+        # TODO make this work.
+        self.sublevels = []
         while self.content.startswith(": ") and self.content[2:].lstrip():
+            self.sublevels.append(self.indent)
             self.indent += len(self.content) - len(self.content[2:].lstrip())
             self.content = self.content[2:].lstrip()
         if self.content.strip() == ":":
@@ -45,16 +60,22 @@ def wisp2lisp(code):
         if not line.continues:
             line.content = "(" + line.content
         # rising indent: sibling function or variable
-        if line.indent > prev.indent:
-            levels.append(line.indent)
+        if line.base > prev.indent:
+            levels.extend(line.levels)
             lisplines.append(prev.indent * " " + prev.content)
         # same indent: neighbour function of variable: close the previour lines bracket
-        if line.indent == prev.indent:
+        elif line.base == prev.indent:
             lisplines.append(prev.indent * " " + prev.content + ")")
+            for l in line.levels:
+                if l > levels[-1]:
+                    levels.append(l)
         # lower indent: parent funtion or variable. Find the number of brackets to close
-        if prev.indent > line.indent:
+        elif prev.indent > line.base:
             bracketstoclose = len([level for level in levels if level >= line.indent])
             levels = levels[:-bracketstoclose + 1]
+            for l in line.levels:
+                if not levels or l > levels[-1]:
+                    levels.append(l)
             if prev.continues:
                 bracketstoclose -= 1
             lisplines.append(prev.indent * " " + prev.content + ")" * bracketstoclose)

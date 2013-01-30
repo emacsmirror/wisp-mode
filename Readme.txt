@@ -4,9 +4,9 @@ Wisp: Whitespace-Lisp
     (defun a (b c)
       (let 
         ((d e)
-         ((f)
-          (g)))
-      (h i)
+          ((f)
+          ,(g)))
+      '(h i)
       j)
 
 becomes
@@ -15,9 +15,9 @@ becomes
       let
         : d e
           : f
-          : g
-      h i
+            , g
+      ' h i
       . j
 
 
-
+State: basics work. : and , and ' as start of the line do not work yet.
