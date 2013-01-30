@@ -5,7 +5,9 @@ defun a
       d e
       : 
         f
-      : 
         g
-  h i
-  . j
+      : 
+        h
+        . i
+  j k
+  . l
