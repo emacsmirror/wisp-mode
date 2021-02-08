@@ -1,3 +1,6 @@
+wisp 1.0.4
+- add one more setlocale fallback: If it cannot use unicode, wisp now proceeds with degraded operation rather than failing outright.
+
 wisp 1.0.3
 - provide wisp script that wraps guile --language=wisp -x .w
 - add Guile 3.0 to supported versions
