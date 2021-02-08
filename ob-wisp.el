@@ -48,7 +48,7 @@
 
 (defvar org-babel-default-header-args:wisp '())
 
-(defcustom org-babel-wisp-command "guile -L $HOME/wisp --language=wisp -x .w -e '(lambda (args) (set! (@@ (system repl common) repl-welcome) (const #f)))' -c ''"
+(defcustom org-babel-wisp-command "wisp -e '(lambda (args) (set! (@@ (system repl common) repl-welcome) (const #f)))'"
   ;; setting repl-welcome to #f gets rid of printing the REPL prefix and Guile version
   "Name of the command for executing Wisp code."
   :version "24.4"
@@ -237,14 +237,14 @@ then create.  Return the initialized session."
 define : main
 %s
 
-write (main) : open-output-file '%s' .")
+write (main) : open-output-file '%s'")
 (defvar org-babel-wisp-pp-wrapper-method
   "
 import : ice-9 pretty-print
 define : main
 %s
 
-pretty-print (main) : open-output-file '%s' .")
+pretty-print (main) : open-output-file '%s'")
 
 (defun org-babel-wisp-evaluate
   (session body &optional result-type result-params preamble)
@@ -276,7 +276,7 @@ last statement in BODY, as elisp."
                            org-babel-wisp-pp-wrapper-method
                          org-babel-wisp-wrapper-method)
                        (mapconcat
-                        (lambda (line) (format "\t%s" line))
+                        (lambda (line) (format "    %s" line))
                         (split-string
                          (org-remove-indentation
                           (org-trim body))
@@ -301,10 +301,10 @@ last statement in BODY, as elisp."
 	     (lambda (statement) (insert statement) (funcall send-wait))
 	     (if pp
 		 (list
-		  "import : ice-9 pretty-print ."
-		  (format "pretty-print (main) : open-output-file '%s' ."
+		  "import : ice-9 pretty-print"
+		  (format "pretty-print (main) : open-output-file '%s'"
 			  (org-babel-process-file-name tmp-file 'noquote)))
-	       (list (format "write (main) : open-output-file '%s' ."
+	       (list (format "write (main) : open-output-file '%s'"
 			     (org-babel-process-file-name tmp-file
                                                           'noquote)))))))
 	 (input-body (lambda (body)

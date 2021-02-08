@@ -103,6 +103,10 @@ when : null? : cdr args
 define csv-file
     car : cdr args
 
+define : remove-options args
+    . "remove all options (starting with -) from the argument list. This ignores --."
+    remove : λ(x) : string-prefix? "-" x
+
 define project-prefix
     if : null? : cdr : cdr args
        . "guile"
@@ -116,7 +120,6 @@ define : main args
       : port : open-input-file csv-file
         data-by-project : read-csv port
         data-min-by-test : min-alist-by-test data-by-project
-        guile-data : select-project-data data-by-project project-prefix
       when : member "--csv" args
           ; display "test slowdown\n"
           map : λ (x) : apply format #t "~a ~a\n" : list (car x) (cdr x)            
