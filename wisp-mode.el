@@ -5,7 +5,7 @@
 ;;               from https://github.com/kwrooijen/indy/blob/master/indy.el
 
 ;; Author: Arne Babenhauserheide <arne_bab@web.de>
-;; Version: 0.2.7
+;; Version: 0.2.8
 ;; Keywords: languages, lisp, scheme
 ;; Homepage: http://www.draketo.de/english/wisp
 ;; Package-Requires: ((emacs "24.4"))
@@ -42,6 +42,9 @@
 ;; 
 ;; ChangeLog:
 ;;
+;;  - 0.2.8: use electric-indent-inhibit instead of electric-indent-local-mode
+;;           rename gpl.txt to COPYING for melpa
+;;           use the variable defined by define-derived-mode
 ;;  - 0.2.7: dependency declared, always use wisp--prefix, homepage url
 ;;  - 0.2.6: remove unnecessary autoloads
 ;;  - 0.2.5: backtab chooses existing lower indentation values from previous lines.
@@ -55,17 +58,6 @@
 ;;; Code:
 
 (require 'scheme)
-
-; allow users to run hooks when they enter my mode
-(defvar wisp-mode-hook nil)
-
-; use this mode automatically
-;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.w\\'" . wisp-mode))
-;;;###autoload
-(add-hook 'wisp-mode-hook
-          (lambda ()
-            (electric-indent-local-mode -1)))
 
 ; see http://www.emacswiki.org/emacs/DerivedMode
 
@@ -236,6 +228,15 @@ prev, not to prev+tab."
   (define-key wisp-mode-map (kbd "<tab>") '("indent line" . wisp--tab))
   (define-key wisp-mode-map (kbd "<backtab>") '("unindent line" . wisp--backtab))
   (define-key wisp-mode-map "\r" '("wisp newline" . wisp--return)))
+
+; use this mode automatically
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.w\\'" . wisp-mode))
+;;;###autoload
+(add-hook 'wisp-mode-hook
+          (lambda ()
+            (setq electric-indent-inhibit t)))
+
 
                         
 
