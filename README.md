@@ -15,16 +15,15 @@ Wisp: Whitespace to Lisp
 
 Wisp turns indentation based syntax into Lisp. The conversion is homoiconic[^h], generic[^g], and backwards-compatible[^b]. It is inspired by [project readable][], but tries to keep itself simple (and stupid: just add parens for indentation).
 
-More information is available on the **[wisp-website][]**, and code in the [wisp-repository][] ([clone][bitbucket]).
+More information is available on the **[wisp-website][]**, and code in the [wisp-repository][]
 
 For a short presentation, see [Why Wisp?](why-wisp.html)
 
 Note that this is full-fledged scheme, with all its capabilities like hygienic macros (programmable syntax!) and full tail recursion.
 
 [wisp-website]: http://draketo.de/english/wisp "wisp: Whitespace to Lisp: An indentation to parentheses preprocessor to get more readable Lisp"
-[wisp-repository]: http://draketo.de/proj/wisp "Mercurial Repository for Wisp: Whitespace to Lisp"
+[wisp-repository]: http://hg.sr.ht/~arnebab/wisp "Mercurial Repository for Wisp: Whitespace to Lisp"
 [project readable]: http://readable.sourceforge.net/ "Readable Lisp S-expressions Project"
-[bitbucket]: https://bitbucket.org/ArneBab/wisp/ "Clone of the Mercurial Repository for Wisp: Whitespace to Lisp"
 
 Requirements
 ------------
@@ -40,13 +39,15 @@ Setup
 
 From the repository:
 
-* Get wisp: `hg clone http://draketo.de/proj/wisp` (needs [Mercurial](http://mercurial-scm.org))
+* Get wisp: `hg clone http://hg.sr.ht/~arnebab/wisp` (needs [Mercurial](http://mercurial-scm.org))
 * Bootstrap: `cd wisp && autoreconf -i && ./configure && make`
 
 From a release:
 
-* Get a release from [bitbucket.org/ArneBab/wisp/downloads/](https://bitbucket.org/ArneBab/wisp/downloads/)
+* Get a release from the wisp-website: [draketo.de/english/wisp][wisp-website]
 * Unpack and build: `tar xf [release].tar.gz; cd [release]; ./configure; make`
+
+[wisp-website]: http://draketo.de/english/wisp "wisp: Whitespace to Lisp: An indentation to parentheses preprocessor to get more readable Lisp"
 
 ### Install
 
