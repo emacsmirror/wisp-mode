@@ -74,7 +74,7 @@
 ; note: for easy testing: emacs -Q wisp-mode.el -e eval-buffer wisp-guile.w -e delete-other-windows
 
 
-(defvar wisp-builtin '("define" "define-syntax" "syntax-rules" "syntax-case" "define-syntax-rule" "defun" "let*" "let" "setq" "set!" "set" "if" "when" "while" "set!" "and" "or" "not" "char=?"))
+(defvar wisp-builtin '("and" "char=?" "define" "define-syntax" "define-syntax-rule" "defun" "if" "let" "let*" "not" "or" "set!" "set!" "set" "setq" "syntax-case" "syntax-rules" "when" "while")) ; alphabetical order
 
 ; TODO: Add special treatment for defun foo : bar baz ⇒ foo = function, bar and baz not.
 ; TODO: Add highlighting for `, , and other macro-identifiers.
@@ -83,6 +83,7 @@
   `((
      ("\\`#!.*" . font-lock-comment-face) ; initial hashbang
      ("\"\\.\\*\\?" . font-lock-string-face) ; strings (anything between "")
+     ("[{}]" . font-lock-string-face)      ; emphasize curly infix
      ; ("^_+ *$" . font-lock-default-face) ; line with only underscores
                                            ; and whitespace shown as
                                            ; default text. This is just
@@ -220,11 +221,16 @@ prev, not to prev+tab."
   (set (make-local-variable 'indent-tabs-mode) nil)
   (setq comment-start ";")
   (setq comment-end "")
+  ;; delimiters from https://docs.racket-lang.org/guide/symbols.html
+  ;; ( ) [ ] { } " , ' ` ; # | \
+  (setq imenu-generic-expression
+    '((nil "^define\\(/contract\\)? +:? *\\([^[ \n(){}\",'`;#|\\\]+\\)" 2)))
   (set (make-local-variable 'font-lock-comment-start-skip) ";+ *")
   (set (make-local-variable 'parse-sexp-ignore-comments) t)
   (set (make-local-variable 'font-lock-defaults) wisp-font-lock-keywords)
   (set (make-local-variable 'mode-require-final-newline) t)
   ;; bind keys to \r, not (kbd "<return>") to allow completion to work on RET
+  (define-key wisp-mode-map (kbd "C-c i") '("imenu" . imenu))
   (define-key wisp-mode-map (kbd "<tab>") '("indent line" . wisp--tab))
   (define-key wisp-mode-map (kbd "<backtab>") '("unindent line" . wisp--backtab))
   (define-key wisp-mode-map "\r" '("wisp newline" . wisp--return)))
