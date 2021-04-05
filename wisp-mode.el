@@ -5,7 +5,7 @@
 ;;               from https://github.com/kwrooijen/indy/blob/master/indy.el
 
 ;; Author: Arne Babenhauserheide <arne_bab@web.de>
-;; Version: 0.2.8
+;; Version: 0.2.9
 ;; Keywords: languages, lisp, scheme
 ;; Homepage: http://www.draketo.de/english/wisp
 ;; Package-Requires: ((emacs "24.4"))
@@ -42,7 +42,7 @@
 ;; 
 ;; ChangeLog:
 ;;
-;;  - ?????: enabled imenu - thanks to Greg Reagle!
+;;  - 0.2.9: enabled imenu - thanks to Greg Reagle!
 ;;  - 0.2.8: use electric-indent-inhibit instead of electric-indent-local-mode
 ;;           rename gpl.txt to COPYING for melpa
 ;;           use the variable defined by define-derived-mode
