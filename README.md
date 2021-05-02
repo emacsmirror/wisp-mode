@@ -85,6 +85,24 @@ If you want to use a curly-infix expression starting a line, you have to prefix 
 
 [Fibonacci]: #fibonacci "Generation of the fibonacci sequence in wisp and s-expressions"
 
+License
+-------
+
+Wisp as project is licensed under the **GPLv3 or later**. See COPYING
+for details. This explicitly includes the files examples/* and emacs
+lisp files.
+
+The implementation of wisp as language and implementation of
+[SRFI-119](https://srfi.schemers.org/srfi-119/srfi-119.html) as well
+as the tests and supporting files are licensed under the lax
+**expat-license**: wisp-guile.w, wisp-scheme.w, wisp-reader.w,
+Makefile.am, configure.ac, bootstrap.sh, bootstrap-reader.sh,
+systaxtestsreader.sh, syntaxtests.sh, tests/*, testrunner.w,
+README.md, and other files required to use wisp as the language.
+
+Providing wisp the language under the expat-license to make it easier
+to embed wisp in games that use Guile.
+
 Notes
 -----
 
