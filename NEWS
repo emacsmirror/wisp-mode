@@ -1,5 +1,6 @@
 wisp 1.0.4
 - add one more setlocale fallback: If it cannot use unicode, wisp now proceeds with degraded operation rather than failing outright.
+- explicitly allow using wisp as language under the expat-license for easier embedding in Guile-using games like Tsukundere Shitsumon: https://gitlab.com/leoprikler/tsukundere-shitsumon/
 
 wisp 1.0.3
 - provide wisp script that wraps guile --language=wisp -x .w
