@@ -5,7 +5,7 @@
 ;;               from https://github.com/kwrooijen/indy/blob/master/indy.el
 
 ;; Author: Arne Babenhauserheide <arne_bab@web.de>
-;; Version: 0.2.7
+;; Version: 0.2.9
 ;; Keywords: languages, lisp, scheme
 ;; Homepage: http://www.draketo.de/english/wisp
 ;; Package-Requires: ((emacs "24.4"))
@@ -42,6 +42,10 @@
 ;; 
 ;; ChangeLog:
 ;;
+;;  - 0.2.9: enabled imenu - thanks to Greg Reagle!
+;;  - 0.2.8: use electric-indent-inhibit instead of electric-indent-local-mode
+;;           rename gpl.txt to COPYING for melpa
+;;           use the variable defined by define-derived-mode
 ;;  - 0.2.7: dependency declared, always use wisp--prefix, homepage url
 ;;  - 0.2.6: remove unnecessary autoloads
 ;;  - 0.2.5: backtab chooses existing lower indentation values from previous lines.
@@ -55,17 +59,6 @@
 ;;; Code:
 
 (require 'scheme)
-
-; allow users to run hooks when they enter my mode
-(defvar wisp-mode-hook nil)
-
-; use this mode automatically
-;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.w\\'" . wisp-mode))
-;;;###autoload
-(add-hook 'wisp-mode-hook
-          (lambda ()
-            (electric-indent-local-mode -1)))
 
 ; see http://www.emacswiki.org/emacs/DerivedMode
 
@@ -82,7 +75,7 @@
 ; note: for easy testing: emacs -Q wisp-mode.el -e eval-buffer wisp-guile.w -e delete-other-windows
 
 
-(defvar wisp-builtin '("define" "define-syntax" "syntax-rules" "syntax-case" "define-syntax-rule" "defun" "let*" "let" "setq" "set!" "set" "if" "when" "while" "set!" "and" "or" "not" "char=?"))
+(defvar wisp-builtin '("and" "char=?" "define" "define-syntax" "define-syntax-rule" "defun" "if" "let" "let*" "not" "or" "set!" "set!" "set" "setq" "syntax-case" "syntax-rules" "when" "while")) ; alphabetical order
 
 ; TODO: Add special treatment for defun foo : bar baz ⇒ foo = function, bar and baz not.
 ; TODO: Add highlighting for `, , and other macro-identifiers.
@@ -91,6 +84,7 @@
   `((
      ("\\`#!.*" . font-lock-comment-face) ; initial hashbang
      ("\"\\.\\*\\?" . font-lock-string-face) ; strings (anything between "")
+     ("[{}]" . font-lock-string-face)      ; emphasize curly infix
      ; ("^_+ *$" . font-lock-default-face) ; line with only underscores
                                            ; and whitespace shown as
                                            ; default text. This is just
@@ -228,14 +222,28 @@ prev, not to prev+tab."
   (set (make-local-variable 'indent-tabs-mode) nil)
   (setq comment-start ";")
   (setq comment-end "")
+  ;; delimiters from https://docs.racket-lang.org/guide/symbols.html
+  ;; ( ) [ ] { } " , ' ` ; # | \
+  (setq imenu-generic-expression
+    '((nil "^define\\(/contract\\)? +:? *\\([^[ \n(){}\",'`;#|\\\]+\\)" 2)))
   (set (make-local-variable 'font-lock-comment-start-skip) ";+ *")
   (set (make-local-variable 'parse-sexp-ignore-comments) t)
   (set (make-local-variable 'font-lock-defaults) wisp-font-lock-keywords)
   (set (make-local-variable 'mode-require-final-newline) t)
   ;; bind keys to \r, not (kbd "<return>") to allow completion to work on RET
+  (define-key wisp-mode-map (kbd "C-c i") '("imenu" . imenu))
   (define-key wisp-mode-map (kbd "<tab>") '("indent line" . wisp--tab))
   (define-key wisp-mode-map (kbd "<backtab>") '("unindent line" . wisp--backtab))
   (define-key wisp-mode-map "\r" '("wisp newline" . wisp--return)))
+
+; use this mode automatically
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.w\\'" . wisp-mode))
+;;;###autoload
+(add-hook 'wisp-mode-hook
+          (lambda ()
+            (setq electric-indent-inhibit t)))
+
 
                         
 

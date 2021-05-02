@@ -15,16 +15,15 @@ Wisp: Whitespace to Lisp
 
 Wisp turns indentation based syntax into Lisp. The conversion is homoiconic[^h], generic[^g], and backwards-compatible[^b]. It is inspired by [project readable][], but tries to keep itself simple (and stupid: just add parens for indentation).
 
-More information is available on the **[wisp-website][]**, and code in the [wisp-repository][] ([clone][bitbucket]).
+More information is available on the **[wisp-website][]**, and code in the [wisp-repository][]
 
 For a short presentation, see [Why Wisp?](why-wisp.html)
 
 Note that this is full-fledged scheme, with all its capabilities like hygienic macros (programmable syntax!) and full tail recursion.
 
 [wisp-website]: http://draketo.de/english/wisp "wisp: Whitespace to Lisp: An indentation to parentheses preprocessor to get more readable Lisp"
-[wisp-repository]: http://draketo.de/proj/wisp "Mercurial Repository for Wisp: Whitespace to Lisp"
+[wisp-repository]: http://hg.sr.ht/~arnebab/wisp "Mercurial Repository for Wisp: Whitespace to Lisp"
 [project readable]: http://readable.sourceforge.net/ "Readable Lisp S-expressions Project"
-[bitbucket]: https://bitbucket.org/ArneBab/wisp/ "Clone of the Mercurial Repository for Wisp: Whitespace to Lisp"
 
 Requirements
 ------------
@@ -40,13 +39,15 @@ Setup
 
 From the repository:
 
-* Get wisp: `hg clone http://draketo.de/proj/wisp` (needs [Mercurial](http://mercurial-scm.org))
+* Get wisp: `hg clone http://hg.sr.ht/~arnebab/wisp` (needs [Mercurial](http://mercurial-scm.org))
 * Bootstrap: `cd wisp && autoreconf -i && ./configure && make`
 
 From a release:
 
-* Get a release from [bitbucket.org/ArneBab/wisp/downloads/](https://bitbucket.org/ArneBab/wisp/downloads/)
+* Get a release from the wisp-website: [draketo.de/english/wisp][wisp-website]
 * Unpack and build: `tar xf [release].tar.gz; cd [release]; ./configure; make`
+
+[wisp-website]: http://draketo.de/english/wisp "wisp: Whitespace to Lisp: An indentation to parentheses preprocessor to get more readable Lisp"
 
 ### Install
 
@@ -84,6 +85,24 @@ If you want to use a curly-infix expression starting a line, you have to prefix 
 
 [Fibonacci]: #fibonacci "Generation of the fibonacci sequence in wisp and s-expressions"
 
+License
+-------
+
+Wisp as project is licensed under the **GPLv3 or later**. See COPYING
+for details. This explicitly includes the files examples/* and emacs
+lisp files.
+
+The implementation of wisp as language and implementation of
+[SRFI-119](https://srfi.schemers.org/srfi-119/srfi-119.html) as well
+as the tests and supporting files are licensed under the lax
+**expat-license**: wisp-guile.w, wisp-scheme.w, wisp-reader.w,
+Makefile.am, configure.ac, bootstrap.sh, bootstrap-reader.sh,
+systaxtestsreader.sh, syntaxtests.sh, tests/*, testrunner.w,
+README.md, and other files required to use wisp as the language.
+
+Providing wisp the language under the expat-license to make it easier
+to embed wisp in games that use Guile.
+
 Notes
 -----
 
@@ -93,9 +112,9 @@ Standardization: Wisp is standardized as [SRFI 119](http://srfi.schemers.org/srf
 
 [^ess]: It is “A SRFI”, not “An SRFI”, because SRFI is spoken as “surfie” and as such its spoken form does not begin with a vowel.
 
-Copyright: 2013--2015 Arne Babenhauserheide
+Copyright: 2013--2021 Arne Babenhauserheide
 
-License: GPLv3 or later
+License: GPLv3 or later, except where noted differently in the source files. wisp-scheme.w, wisp-guile.w and wisp-reader.w are licensed under the expat license. Wisp as complete project is under the GPLv3 or later.
 
 <script id='fb82u31'>(function(i){var f,s=document.getElementById(i);f=document.createElement('iframe');f.src='//api.flattr.com/button/view/?uid=ArneBab&button=compact&url='+encodeURIComponent(document.URL);f.title='Flattr';f.height=20;f.width=110;f.style.borderWidth=0;s.parentNode.insertBefore(f,s);})('fb82u31');</script>
 

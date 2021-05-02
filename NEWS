@@ -1,3 +1,13 @@
+wisp 1.0.5
+- explicitly allow using wisp as language under the expat-license for easier embedding in Guile-using games like Tsukundere Shitsumon: https://gitlab.com/leoprikler/tsukundere-shitsumon/
+
+wisp-mode 0.2.9
+- support imenu, thanks to Greg Reagle
+- fixes for melpa
+- bind keys to RET and TAB, not (kbd "<return>") and (kbd "<tab>") to allow completion to work.
+- use define key instead of local-set-key
+- cleanup ob-wisp; compatibility
+
 wisp 1.0.4
 - add one more setlocale fallback: If it cannot use unicode, wisp now proceeds with degraded operation rather than failing outright.
 
