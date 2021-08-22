@@ -21,15 +21,13 @@ exec -a "$0" guile -L $(dirname $(dirname $(realpath "$0"))) --language=wisp -x 
 define-module : examples lisp2wisp
               . #:export (lisp2wisp main)
 
-import : srfi srfi-42 ; list-ec
-         srfi srfi-9 ; records
-         ice-9 optargs
-
 import : examples doctests
          srfi srfi-1 ; list operations
          srfi srfi-37 ; commandline parsing
-         srfi srfi-60 ; bit conversion via integer->list 
+         srfi srfi-9 ; records
+         only (srfi srfi-26) cut
          rnrs bytevectors
+         ice-9 optargs
          ice-9 match
          ice-9 format
          ice-9 rdelim ; for read-string
@@ -59,16 +57,22 @@ define : read-all port
 
 define : format-wisp-lines code
     let loop : (depth 0) (code code)
-        map (λ(x) (format #f "~s" x)) code
+        cond 
+            : pair? code
+                pretty-print code
+                string-join : map (cut loop (+ depth 1) <>) code
+                    if (pair? (car code)) "\n" " "
+            else            
+                pretty-print code
+                format #f "~s" code
         
 
 define : lisp2wisp port
     ##
         tests
-            test-equal : string-trim-right : read-file "../tests/btest.scm"
+            test-equal : string-trim-right : read-file "../tests/btest.w"
                 lisp2wisp : open-input-file "../tests/btest.scm"
-    string-join : format-wisp-lines : read-all port
-                . "\n"
+    format-wisp-lines : read-all port
 
 define %this-module : current-module
 define : main args
