@@ -51,20 +51,23 @@ define : write-file filepath bytevector
 
 
 define : read-all port
-  let readloop : : res : '
-    pretty-print res
+  let loop : : res : '
     let : : next : read port
-      pretty-print next
       if : eof-object? next
           . res 
-          readloop : append res : list next
+          loop : append res : list next
+
+define : format-wisp-lines code
+    let loop : (depth 0) (code code)
+        map (λ(x) (format #f "~s" x)) code
+        
 
 define : lisp2wisp port
     ##
         tests
             test-equal : string-trim-right : read-file "../tests/btest.scm"
                 lisp2wisp : open-input-file "../tests/btest.scm"
-    string-join : map (λ(x) (format #f "~s" x)) : read-all port
+    string-join : format-wisp-lines : read-all port
                 . "\n"
 
 define %this-module : current-module
