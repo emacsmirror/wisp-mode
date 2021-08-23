@@ -55,23 +55,31 @@ define : read-all port
           . res 
           loop : append res : list next
 
-define : format-wisp-lines code
+define : format-basic-wisp code
     let loop : (depth 0) (code code)
         cond 
-            : pair? code
-                pretty-print code
-                string-join : map (cut loop (+ depth 1) <>) code
-                    if (pair? (car code)) "\n" " "
+            : list? code
+                string-append
+                    loop depth : car code
+                    if (null? (cdr code)) "" " "
+                    string-join : map (cut loop (+ depth 1) <>) : cdr code
+                        if (pair? (car code)) "\n" " "
             else            
                 pretty-print code
                 format #f "~s" code
-        
+
+define : format-wisp-lines code
+    string-join
+        map format-basic-wisp code
+        . "\n"
 
 define : lisp2wisp port
     ##
         tests
             test-equal : string-trim-right : read-file "../tests/btest.w"
                 lisp2wisp : open-input-file "../tests/btest.scm"
+            ;; test-equal : string-trim-right : read-file "../tests/dotted-pair.w"
+            ;;     lisp2wisp : open-input-file "../tests/dotted-pair.scm"
     format-wisp-lines : read-all port
 
 define %this-module : current-module
