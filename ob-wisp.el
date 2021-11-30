@@ -80,7 +80,7 @@ This will typically be either 'wisp or 'wisp-mode."
   :type 'symbol)
 
 (defun org-babel-execute:wisp (body params)
-  "Execute a block of Wisp code with Babel.
+  "Execute a block of Wisp code BODY with Babel using PARAMS.
 This function is called by `org-babel-execute-src-block'."
   (let* ((session (org-babel-wisp-initiate-session
 		   (cdr (assoc :session params))))
@@ -143,8 +143,8 @@ specifying a variable of the same value."
       (concat "list" (mapconcat #'org-babel-wisp-var-to-wisp var " "))
     (if (equal var 'hline)
 	org-babel-wisp-hline-to
-      (format ;; TODO: adjust to wisp
-       (if (and (stringp var) (string-match "[\n\r]" var)) "\"\"%S\"\"" "%S")
+      (format
+       (if (and (stringp var) (string-match "[\n\r]" var)) "\"%S\"" "%S")
        (if (stringp var) (substring-no-properties var) var)))))
 
 (defun org-babel-wisp-table-or-string (results)
