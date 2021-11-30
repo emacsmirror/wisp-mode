@@ -78,8 +78,8 @@ define : lisp2wisp port
         tests
             test-equal : string-trim-right : read-file "../tests/btest.w"
                 lisp2wisp : open-input-file "../tests/btest.scm"
-            ;; test-equal : string-trim-right : read-file "../tests/dotted-pair.w"
-            ;;     lisp2wisp : open-input-file "../tests/dotted-pair.scm"
+            test-equal : string-trim-right : read-file "../tests/dotted-pair.w"
+                lisp2wisp : open-input-file "../tests/dotted-pair.scm"
     format-wisp-lines : read-all port
 
 define %this-module : current-module

@@ -465,9 +465,15 @@ define* : wisp-scheme-indentation-to-parens lines
              not : null? lines
              not : line-empty-code? : car lines
              not : = 0 : line-real-indent : car lines ; -1 is a line with a comment
-           throw 'wisp-syntax-error 
-             format #f "The first symbol in a chunk must start at zero indentation. Indentation and line: ~A"
-               car lines
+           if : = 1 : line-real-indent : car lines
+             ;; accept a single space as indentation of the first line (and ignore the indentation) to support meta commands
+             set! lines
+                  cons
+                      cons 0 : cdr : car lines
+                      cdr lines
+             throw 'wisp-syntax-error
+               format #f "The first symbol in a chunk must start at zero indentation. Indentation and line: ~A"
+                 car lines
          let loop
            : processed '()
              unprocessed lines

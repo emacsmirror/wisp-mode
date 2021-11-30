@@ -1,3 +1,7 @@
+wisp 1.0.6
+- allow (and ignore!) a single space indentation for the first line of a chunk to support meta-commands
+- ensure that (language wisp) is compiled in the wisp REPL
+
 wisp 1.0.5
 - explicitly allow using wisp as language under the expat-license for easier embedding in Guile-using games like Tsukundere Shitsumon: https://gitlab.com/leoprikler/tsukundere-shitsumon/
 
