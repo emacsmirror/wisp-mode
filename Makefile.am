@@ -39,7 +39,10 @@ AM_DISTCHECK_CONFIGURE_FLAGS="--quiet"
 wisp2lisp: wisp.scm ## build only the wisp2lisp converter
 	cp $< $@
 
-wisp: wisp.in ## build only the wisp runner script
+.SECONDARY: .wisp-repl
+.wisp-repl: wisp.in # intermediate file to distinguish between wisp the project and the runner
+	cp $< $@
+wisp: .wisp-repl ## build only the wisp runner script
 	cp $< $@
 
 .INTERMEDIATE: .mydatastuff
@@ -63,7 +66,13 @@ syntaxtestsreader.sh : ${WISP} wisp.scm tests/runtests-scheme-reader.sh
 	echo @abs_top_srcdir@/tests/runtests-scheme-reader.sh @abs_top_srcdir@ @abs_top_builddir@ >> @abs_top_builddir@/$@
 	chmod +x @abs_top_builddir@/$@
 
-TESTS=syntaxtests.sh syntaxtestsreader.sh
+.INTERMEDIATE: scripttests.sh
+scripttests.sh : .wisp-repl wisp.scm tests/runtests-scripts.sh
+	echo '#!/usr/bin/env bash' > @abs_top_builddir@/$@
+	echo @abs_top_srcdir@/tests/runtests-scripts.sh $(realpath $<) >> @abs_top_builddir@/$@
+	chmod +x @abs_top_builddir@/$@
+
+TESTS=syntaxtests.sh syntaxtestsreader.sh scripttests.sh
 
 ACLOCAL_AMFLAGS = -I m4
 
