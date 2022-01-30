@@ -245,6 +245,57 @@ prev, not to prev+tab."
             (setq electric-indent-inhibit t)))
 
 
+(defcustom wisp--bg-colors
+  '( ;; paul tol's pale scheme
+     "#BBCCEE"
+     "#CCEEFF"
+     "#CCDDAA"
+     "#EEEEBB"
+     "#FFCCCC"
+     "#DDDDDD"
+     "#BBCCEE"
+     "#CCEEFF"
+     "#CCDDAA"
+     "#EEEEBB"
+     "#FFCCCC"
+     "#DDDDDD"
+    ) "Background-colors to show the indentation."
+      :group 'wisp
+      :type 'list)
+
+(defun wisp--add-indentation-levels-before (indent levels)
+  "Add the indentation level with INDENT or less to the LEVELS."
+  (if (= 0 indent)
+      levels
+    (wisp--add-indentation-levels-before (wisp-prev-indent-lower-than indent) (+ levels 1))))
+
+(defun wisp--current-indentation-level (indent)
+  "Get the indentation level at the INDENT — the number of indentation levels defined before it."
+  (wisp--add-indentation-levels-before indent 0))
+
+(defun wisp--highlight-indentation (&optional begin end length)
+  "Colorize a buffer or the region between BEGIN and END up to LENGTH."
+  (interactive)
+  (let (
+        (begin (if (not begin)
+                   1
+                 begin))
+        (end (if (not end)
+                 (point-max)
+               end)))
+    (save-excursion
+      (goto-char (point-min))
+      (with-silent-modifications
+	    (while (string-match "[^ \n\r	]+" (buffer-substring (point) (point-max)))
+          (back-to-indentation)
+	    (let ((start (point)))
+	      (end-of-line)
+              (ignore-errors ;; FIXME: find why there sometimes are errors.
+	        (overlay-put (make-overlay start (point))
+				   'face
+				   `(:background
+				     ,(nth (wisp--current-indentation-level (wisp--current-indent)) wisp--bg-colors)))
+            (forward-line 1))))))))
                         
 
 (provide 'wisp-mode)
