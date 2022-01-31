@@ -302,11 +302,12 @@ prev, not to prev+tab."
 				             ,(nth level wisp--bg-colors)))
               
               (while (search-forward ": " end 'move-to-end)
-                (setq level (+ level 1))
-	            (overlay-put (make-overlay (point) end)
-				             'face
-				             `(:background
-				               ,(nth level wisp--bg-colors))))
+                (when (null (nth 8 (syntax-ppss))) ;; not within string or comment
+                  (setq level (+ level 1))
+	              (overlay-put (make-overlay (point) end)
+				               'face
+				               `(:background
+				                 ,(nth level wisp--bg-colors)))))
               (forward-line 1))))))))
                         
 
