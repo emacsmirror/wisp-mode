@@ -115,7 +115,7 @@
   "Default highlighting expressions for wisp mode.")
 (defun wisp--prev-indent ()
   "Get the amount of indentation spaces of the previous line."
-  (save-excursion
+  (save-mark-and-excursion
     (forward-line -1)
     (while (wisp--line-empty?)
       (forward-line -1))
@@ -124,7 +124,7 @@
 
 (defun wisp-prev-indent-lower-than (indent)
   "Get the indentation which is lower than INDENT among previous lines."
-  (save-excursion
+  (save-mark-and-excursion
     (forward-line -1)
     (while (or (wisp--line-empty?)
                (and (>= (wisp--current-indent) indent)
@@ -143,7 +143,7 @@
 
 (defun wisp--current-indent ()
   "Get the amount of indentation spaces if the current line."
-  (save-excursion
+  (save-mark-and-excursion
     (back-to-indentation)
     (current-column)))
 
@@ -293,30 +293,31 @@ prev, not to prev+tab."
         (end (if (not end)
                  (point-max)
                end)))
-    (save-excursion
-      ;; delete our overlays that are fully inside the region, cut others short
-      (mapc (lambda (overlay)
-              (cond
-               ;; delete leftovers
-               ((not (overlay-start overlay))
-                (setq wisp--highlight-indentation-overlays
-                      (delete overlay wisp--highlight-indentation-overlays)))
-               ;; delete fully inside
-               ((and (< (overlay-end overlay) end)
-                     (> (overlay-start overlay) begin))
-                (delete-overlay overlay)
-                (setq wisp--highlight-indentation-overlays
-                      (delete overlay wisp--highlight-indentation-overlays)))
-               ;; cut to before begin
-               ((< (overlay-end overlay) end)
-                (move-overlay overlay (overlay-start overlay) begin))
-               ;; cut to after end
-               ((> (overlay-start overlay) begin)
-                (move-overlay overlay end (overlay-end overlay))))
-              nil)
-            wisp--highlight-indentation-overlays)
-      (goto-char begin)
+    (save-mark-and-excursion
       (with-silent-modifications
+        ;; change all affected blocks
+        (goto-char begin)
+        (backward-paragraph)
+        (setq begin (point))
+        (goto-char end)
+        (forward-paragraph)
+        (setq end (point))
+        (goto-char begin)
+        ;; delete our overlays that are fully inside the region, cut others short
+        (mapc (lambda (overlay)
+                (cond
+                 ;; delete leftovers
+                 ((not (overlay-start overlay))
+                  (setq wisp--highlight-indentation-overlays
+                        (delete overlay wisp--highlight-indentation-overlays)))
+                 ;; delete all that touch
+                 ((and (> (overlay-start overlay) begin)
+                       (< (overlay-end overlay) end))
+                  (delete-overlay overlay)
+                  (setq wisp--highlight-indentation-overlays
+                        (delete overlay wisp--highlight-indentation-overlays))))
+                nil)
+              wisp--highlight-indentation-overlays)
 	    (while (< (point) end)
           (back-to-indentation)
 	      (let* ((start (point))
@@ -325,7 +326,7 @@ prev, not to prev+tab."
                  (raw-level (wisp--current-indentation-level (wisp--current-indent)))
                  (level (if period (- raw-level 1) raw-level)))
 	        (end-of-line)
-            (let ((line-end (point)))
+            (let* ((line-end (point)))
               (back-to-indentation)
               (let ((overlay (make-overlay (point) line-end)))
                 (push overlay wisp--highlight-indentation-overlays)
@@ -334,7 +335,8 @@ prev, not to prev+tab."
 				             `(:background
 				               ,(nth level wisp--bg-colors)))
                 
-                (while (search-forward ": " line-end 'move-to-end)
+                (while (string-match ": " (buffer-substring (point) line-end))
+                  (forward-char (match-beginning 0))
                   (when (null (nth 8 (syntax-ppss))) ;; not within string or comment
                     (let ((overlay (make-overlay (point) line-end)))
                       (push overlay wisp--highlight-indentation-overlays)
@@ -342,10 +344,11 @@ prev, not to prev+tab."
 	                  (overlay-put overlay
 				                   'face
 				                   `(:background
-				                     ,(nth level wisp--bg-colors)))))))
+				                     ,(nth level wisp--bg-colors)))))
+                  (forward-char 1)))
               (forward-line 1))))))))
 
-;; to have interactive coloring: (add-hook 'after-change-functions 'wisp--highlight-indentation-region t t)
+;; to have interactive coloring: (add-hook 'after-change-functions 'wisp--highlight-indentation-region nil t)
 
 
 (provide 'wisp-mode)
