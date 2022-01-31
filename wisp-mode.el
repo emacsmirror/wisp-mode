@@ -272,20 +272,27 @@ prev, not to prev+tab."
   "Get the indentation level at the INDENT — the number of indentation levels defined before it."
   (wisp--add-indentation-levels-before indent 1))
 
+(defvar-local wisp--highlight-indentation-overlays '()
+  "Overlays set by wisp indentation highlighting in the current
+  buffer.")
+
+;; TODO: this is very prototype-level code. It should have a
+;; highlight-current-block function to use in an after-change-hook.
 (defun wisp--highlight-indentation (&optional begin end length)
   "Colorize a buffer or the region between BEGIN and END up to LENGTH."
   (interactive)
   (let (
         (begin (if (not begin)
-                   1
+                   (point-min)
                  begin))
         (end (if (not end)
                  (point-max)
                end)))
     (save-excursion
-      (goto-char (point-min))
+      (mapc 'delete-overlay wisp--highlight-indentation-overlays)
+      (goto-char begin)
       (with-silent-modifications
-	    (while (string-match "[^ \n\r	]+" (buffer-substring (point) (point-max)))
+	    (while (string-match "[^ \n\r	]+" (buffer-substring (point) end))
           (back-to-indentation)
 	      (let* ((start (point))
                  (period (looking-at "\\. "))
@@ -295,20 +302,24 @@ prev, not to prev+tab."
 	        (end-of-line)
             (let ((end (point)))
               (back-to-indentation)
-	          (overlay-put (make-overlay (point) end)
-				           'face
-				           `(:background
-				             ,(nth level wisp--bg-colors)))
-              
-              (while (search-forward ": " end 'move-to-end)
-                (when (null (nth 8 (syntax-ppss))) ;; not within string or comment
-                  (setq level (+ level 1))
-	              (overlay-put (make-overlay (point) end)
-				               'face
-				               `(:background
-				                 ,(nth level wisp--bg-colors)))))
+              (let ((overlay (make-overlay (point) end)))
+                (push overlay wisp--highlight-indentation-overlays)
+	            (overlay-put overlay
+				             'face
+				             `(:background
+				               ,(nth level wisp--bg-colors)))
+                
+                (while (search-forward ": " end 'move-to-end)
+                  (when (null (nth 8 (syntax-ppss))) ;; not within string or comment
+                    (let ((overlay (make-overlay (point) end)))
+                      (push overlay wisp--highlight-indentation-overlays)
+                      (setq level (+ level 1))
+	                  (overlay-put overlay
+				                   'face
+				                   `(:background
+				                     ,(nth level wisp--bg-colors)))))))
               (forward-line 1))))))))
-                        
+
 
 (provide 'wisp-mode)
 ;;; wisp-mode.el ends here
