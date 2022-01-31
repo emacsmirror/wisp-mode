@@ -247,18 +247,17 @@ prev, not to prev+tab."
 
 (defcustom wisp--bg-colors
   '( ;; paul tol's pale scheme
+     "#DDDDDD" ;; -1: . foo at toplevel
      "#BBCCEE"
      "#CCEEFF"
      "#CCDDAA"
      "#EEEEBB"
      "#FFCCCC"
-     "#DDDDDD"
      "#BBCCEE"
      "#CCEEFF"
      "#CCDDAA"
      "#EEEEBB"
      "#FFCCCC"
-     "#DDDDDD"
     ) "Background-colors to show the indentation."
       :group 'wisp
       :type 'list)
@@ -271,7 +270,7 @@ prev, not to prev+tab."
 
 (defun wisp--current-indentation-level (indent)
   "Get the indentation level at the INDENT — the number of indentation levels defined before it."
-  (wisp--add-indentation-levels-before indent 0))
+  (wisp--add-indentation-levels-before indent 1))
 
 (defun wisp--highlight-indentation (&optional begin end length)
   "Colorize a buffer or the region between BEGIN and END up to LENGTH."
