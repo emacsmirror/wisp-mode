@@ -288,13 +288,26 @@ prev, not to prev+tab."
       (with-silent-modifications
 	    (while (string-match "[^ \n\r	]+" (buffer-substring (point) (point-max)))
           (back-to-indentation)
-	      (let ((start (point)))
+	      (let* ((start (point))
+                 (period (looking-at "\\. "))
+                 (colon (looking-at ": "))
+                 (raw-level (wisp--current-indentation-level (wisp--current-indent)))
+                 (level (if period (- raw-level 1) raw-level)))
 	        (end-of-line)
-	        (overlay-put (make-overlay start (point))
-				         'face
-				         `(:background
-				           ,(nth (wisp--current-indentation-level (wisp--current-indent)) wisp--bg-colors)))
-            (forward-line 1)))))))
+            (let ((end (point)))
+              (back-to-indentation)
+	          (overlay-put (make-overlay (point) end)
+				           'face
+				           `(:background
+				             ,(nth level wisp--bg-colors)))
+              
+              (while (search-forward ": " end 'move-to-end)
+                (setq level (+ level 1))
+	            (overlay-put (make-overlay (point) end)
+				             'face
+				             `(:background
+				               ,(nth level wisp--bg-colors))))
+              (forward-line 1))))))))
                         
 
 (provide 'wisp-mode)
