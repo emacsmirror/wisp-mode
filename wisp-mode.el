@@ -297,8 +297,7 @@ prev, not to prev+tab."
   (interactive)
   (wisp--highlight-indentation-region (point-min) (point-max)))
 
-;; TODO: this is very prototype-level code. It should have a
-;; highlight-current-block function to use in an after-change-hook.
+
 (defun wisp--highlight-indentation-region (&optional begin end length)
   "Colorize a buffer or the region between BEGIN and END up to LENGTH."
   (interactive "r")
@@ -339,6 +338,7 @@ prev, not to prev+tab."
 	      (let* ((start (point))
                  (period (looking-at "\\. "))
                  (colon (looking-at ": "))
+                 (empty-line (looking-at ": *$"))
                  (raw-level (wisp--current-indentation-level (wisp--current-indent)))
                  (level (if period (- raw-level 1) raw-level)))
 	        (end-of-line)
@@ -350,18 +350,18 @@ prev, not to prev+tab."
 				             'face
 				             `(:background
 				               ,(nth level wisp--bg-colors)))
-                
-                (while (string-match ": " (buffer-substring (point) line-end))
-                  (forward-char (match-beginning 0))
-                  (when (null (nth 8 (syntax-ppss))) ;; not within string or comment
-                    (let ((overlay (make-overlay (point) line-end)))
-                      (push overlay wisp--highlight-indentation-overlays)
-                      (setq level (+ level 1))
-	                  (overlay-put overlay
-				                   'face
-				                   `(:background
-				                     ,(nth level wisp--bg-colors)))))
-                  (forward-char 1)))
+                (unless empty-line
+                  (while (string-match ": " (buffer-substring (point) line-end))
+                    (forward-char (match-beginning 0))
+                    (when (null (nth 8 (syntax-ppss))) ;; not within string or comment
+                      (let ((overlay (make-overlay (point) line-end)))
+                        (push overlay wisp--highlight-indentation-overlays)
+                        (setq level (+ level 1))
+	                    (overlay-put overlay
+				                     'face
+				                     `(:background
+				                       ,(nth level wisp--bg-colors)))))
+                    (forward-char 1))))
               (forward-line 1))))))))
 
 (define-minor-mode wisp-color-indentation-minor-mode
