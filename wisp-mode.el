@@ -5,7 +5,7 @@
 ;;               from https://github.com/kwrooijen/indy/blob/master/indy.el
 
 ;; Author: Arne Babenhauserheide <arne_bab@web.de>
-;; Version: 0.2.9
+;; Version: 0.3.0
 ;; Keywords: languages, lisp, scheme
 ;; Homepage: http://www.draketo.de/english/wisp
 ;; Package-Requires: ((emacs "24.4"))
@@ -42,6 +42,8 @@
 ;; 
 ;; ChangeLog:
 ;;
+;;  - 0.3.0: provide wisp-color-indentation-minor--mode
+;;           that highlights the indentation levels, following wisp-semantics (period and colon)
 ;;  - 0.2.9: enabled imenu - thanks to Greg Reagle!
 ;;  - 0.2.8: use electric-indent-inhibit instead of electric-indent-local-mode
 ;;           rename gpl.txt to COPYING for melpa
@@ -364,15 +366,16 @@ prev, not to prev+tab."
                     (forward-char 1))))
               (forward-line 1))))))))
 
+;;;###autoload
 (define-minor-mode wisp-color-indentation-minor-mode
   "Mode to colorize the indentation level according to wisp-semanttics."
   nil nil nil
   :group 'wisp
-  :after-hook (progn
-                (wisp--highlight-indentation)
-                (add-hook 'after-change-functions 'wisp--highlight-indentation-region nil t)))
-
-;; to have interactive coloring: (add-hook 'after-change-functions 'wisp--highlight-indentation-region nil t)
+  :after-hook (if wisp-color-indentation-minor-mode
+                  (progn
+                    (wisp--highlight-indentation)
+                    (add-hook 'after-change-functions 'wisp--highlight-indentation-region nil t))
+                (remove-hook  'after-change-functions 'wisp--highlight-indentation-region t)))
 
 
 (provide 'wisp-mode)
