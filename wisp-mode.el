@@ -246,6 +246,7 @@ prev, not to prev+tab."
 
 
 (defcustom wisp--bg-colors
+  :group 'wisp
   '( ;; paul tol's pale scheme
      "#DDDDDD" ;; -1: . foo at toplevel
      "#BBCCEE"
@@ -362,6 +363,14 @@ prev, not to prev+tab."
 				                     ,(nth level wisp--bg-colors)))))
                   (forward-char 1)))
               (forward-line 1))))))))
+
+(define-minor-mode wisp-color-indentation-minor-mode
+  "Mode to colorize the indentation level according to wisp-semanttics."
+  nil nil nil
+  :group 'wisp
+  :after-hook (progn
+                (wisp--highlight-indentation)
+                (add-hook 'after-change-functions 'wisp--highlight-indentation-region nil t)))
 
 ;; to have interactive coloring: (add-hook 'after-change-functions 'wisp--highlight-indentation-region nil t)
 
