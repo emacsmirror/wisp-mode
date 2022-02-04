@@ -2,17 +2,6 @@ wisp-mode 0.3.0
 - provide wisp-color-indentation-minor--mode that highlights the
   indentation levels, following wisp-semantics (period and colon)
 
-wisp-mode 0.2.9:
-- enabled imenu - thanks to Greg Reagle!
-
-wisp-mode 0.2.8:
-- use electric-indent-inhibit instead of electric-indent-local-mode
-- rename gpl.txt to COPYING for melpa
-- use the variable defined by define-derived-mode
-
-wisp-mode 0.2.7
-- dependency declared, always use wisp--prefix, homepage url
-
 wisp 1.0.7
 - fix: a lisp-style comment in the bash-cript had broken the wisp REPL
 
@@ -29,6 +18,14 @@ wisp-mode 0.2.9
 - bind keys to RET and TAB, not (kbd "<return>") and (kbd "<tab>") to allow completion to work.
 - use define key instead of local-set-key
 - cleanup ob-wisp; compatibility
+
+wisp-mode 0.2.8:
+- use electric-indent-inhibit instead of electric-indent-local-mode
+- rename gpl.txt to COPYING for melpa
+- use the variable defined by define-derived-mode
+
+wisp-mode 0.2.7
+- dependency declared, always use wisp--prefix, homepage url
 
 wisp 1.0.4
 - add one more setlocale fallback: If it cannot use unicode, wisp now proceeds with degraded operation rather than failing outright.
