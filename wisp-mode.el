@@ -5,7 +5,7 @@
 ;;               from https://github.com/kwrooijen/indy/blob/master/indy.el
 
 ;; Author: Arne Babenhauserheide <arne_bab@web.de>
-;; Version: 0.2.9
+;; Version: 0.3.0
 ;; Keywords: languages, lisp, scheme
 ;; Homepage: http://www.draketo.de/english/wisp
 ;; Package-Requires: ((emacs "24.4"))
@@ -42,6 +42,8 @@
 ;; 
 ;; ChangeLog:
 ;;
+;;  - 0.3.0: provide wisp-color-indentation-minor--mode
+;;           that highlights the indentation levels, following wisp-semantics (period and colon)
 ;;  - 0.2.9: enabled imenu - thanks to Greg Reagle!
 ;;  - 0.2.8: use electric-indent-inhibit instead of electric-indent-local-mode
 ;;           rename gpl.txt to COPYING for melpa
@@ -115,7 +117,7 @@
   "Default highlighting expressions for wisp mode.")
 (defun wisp--prev-indent ()
   "Get the amount of indentation spaces of the previous line."
-  (save-excursion
+  (save-mark-and-excursion
     (forward-line -1)
     (while (wisp--line-empty?)
       (forward-line -1))
@@ -124,7 +126,7 @@
 
 (defun wisp-prev-indent-lower-than (indent)
   "Get the indentation which is lower than INDENT among previous lines."
-  (save-excursion
+  (save-mark-and-excursion
     (forward-line -1)
     (while (or (wisp--line-empty?)
                (and (>= (wisp--current-indent) indent)
@@ -143,7 +145,7 @@
 
 (defun wisp--current-indent ()
   "Get the amount of indentation spaces if the current line."
-  (save-excursion
+  (save-mark-and-excursion
     (back-to-indentation)
     (current-column)))
 
@@ -245,7 +247,405 @@ prev, not to prev+tab."
             (setq electric-indent-inhibit t)))
 
 
-                        
+(defcustom wisp--brighter-colors
+  '(
+    "#DDDDDD" "#eeeeee"
+    "#BBCCEE" "#ccddff"
+    "#CCEEFF" "#ddf3ff"
+    "#CCDDAA" "#ddeebb"
+    "#EEEEBB" "#ffffcc"
+    "#FFCCCC" "#ffdddd"
+    "#BCCCEE" "#cdddff"
+    "#CDEEFF" "#def3ff"
+    "#CDDDAA" "#deeebb"
+    "#EFEEBB" "#ffffcd"
+    "#FFCDCC" "#ffdedd"
+    "#BBCDEE" "#ccdeff"
+    "#CCEFFF" "#ddf5ff"
+    "#CCDEAA" "#ddefbb"
+    "#EEEFBB" "#ffffce"
+    "#FFCCCD" "#ffddde"
+    "#BBCCEF" "#ccdfff"
+    "#CDEFFF" "#def3ff"
+    "#CCDDAB" "#ddeebc"
+    "#EEEEBC" "#ffffcf"
+    "#FFCDCD" "#ffdede"
+    "#BCCDEE" "#cddeff"
+    "#CDEFFF" "#def5ff"
+    "#CDDEAA" "#deefbb"
+    "#EFEFBB" "#ffffd0"
+    "#FFCECD" "#ffdede"
+    )
+  "Highlight-colors for the current level: First the matching color then the replacement."
+  :group 'wisp
+  :type 'plist)
+
+(defcustom wisp--bg-colors
+  '( ;; paul tol's pale scheme, the cycled ones become slightly
+     ;; brighter to allow for identification of indentation level by
+     ;; color.
+    "#DDDDDD" ;; -1: . foo at toplevel
+    "#BBCCEE"
+    "#CCEEFF"
+    "#CCDDAA"
+    "#EEEEBB"
+    "#FFCCCC"
+    "#BCCCEE"
+    "#CDEEFF"
+    "#CDDDAA"
+    "#EFEEBB"
+    "#FFCDCC"
+    "#BBCDEE"
+    "#CCEFFF"
+    "#CCDEAA"
+    "#EEEFBB"
+    "#FFCCCD"
+    "#BBCCEF"
+    "#CDEFFF"
+    "#CCDDAB"
+    "#EEEEBC"
+    "#FFCDCD"
+    "#BCCDEE"
+    "#CDEFFF"
+    "#CDDEAA"
+    "#EFEFBB"
+    "#FFCECD"
+    )
+  "Background-colors to show the indentation."
+  :group 'wisp
+  :type 'list)
+
+(defun wisp--add-indentation-levels-before (indent levels)
+  "Add the indentation level with INDENT or less to the LEVELS."
+  (if (= 0 indent)
+      levels
+    (wisp--add-indentation-levels-before (wisp-prev-indent-lower-than indent) (+ levels 1))))
+
+(defun wisp--current-indentation-level (indent)
+  "Get the indentation level at the INDENT — the number of indentation levels defined before it."
+  (wisp--add-indentation-levels-before indent 1))
+
+(defvar-local wisp--highlight-indentation-overlays '()
+  "Overlays set by wisp indentation highlighting in the current
+  buffer.")
+
+(defvar-local wisp--current-wisp-highlight-overlays-at-point '()
+  "The overlay the point was in in the last time the
+  wisp--highlight-current-indentation-level was called.")
+
+(defvar-local wisp--original-colors-dynamic '()
+  "The inverse of wisp--brighter-colors: the original-colors
+  mapped too the brighter ones, filled when colors are
+  replaced.")
+
+(defvar-local wisp--current-highlight-brighter-color nil
+  "The color of currently highlighted overlays.")
+
+
+(defun wisp--highlight-indentation (&optional begin end length)
+  "Colorize a buffer or the region between BEGIN and END up to LENGTH."
+  (interactive)
+  (wisp--highlight-indentation-region (point-min) (point-max)))
+
+(defun wisp--find-begin-and-end-of-block-around-region (begin end)
+  "Search around the current region and return the wisp-block around it."
+  (let ((begin (if (not begin)
+                   (point-min)
+                 begin))
+        (end (if (not end)
+                 (point-max)
+               end)))
+    (save-mark-and-excursion
+      (goto-char begin)
+      (backward-paragraph)
+      (setq begin (point))
+      (goto-char end)
+      (forward-paragraph)
+      (setq end (point))
+      (goto-char begin))
+    (cons begin end)))
+
+(defun wisp--find-begin-and-end-of-lines-with-same-indentation (position)
+  "Search around the current region and return the wisp-block around it."
+  (save-mark-and-excursion
+    (let* ((begin (if (not position)
+                      (point)
+                    position))
+           (end begin))
+      (goto-char position)
+      (let ((indentation (wisp--current-indent)))
+        (while (and (> (point) (point-min)) (equal indentation (wisp--current-indent)))
+          (setq begin (point-at-bol))
+          (forward-line -1))
+        (forward-line 1)
+        (while (and (< (point) (point-max)) (equal indentation (wisp--current-indent)))
+          (setq end (point-at-eol))
+          (forward-line 1))
+        (cons begin end)))))
+
+
+
+
+(defun wisp--find-begin-and-end-of-subtree (position)
+  "Search around the current POSITION and return the wisp-block around it."
+  (save-mark-and-excursion
+    (let* ((begin (if (not position)
+                      (point)
+                    position))
+           (end begin))
+      (goto-char begin)
+      (back-to-indentation)
+      (let ((indentation (wisp--current-indent))
+            (allow-same-indent (looking-at ". ")))
+        (forward-line -1)
+        (while (and (> (point) (point-min)) (if allow-same-indent (>= indentation (wisp--current-indent)) (> indentation (wisp--current-indent))))
+          (setq begin (point-at-bol))
+          (setq indentation (wisp--current-indent))
+          (forward-line -1))
+        (goto-char end)
+        (forward-line 1)
+        (while (and (< (point) (point-max)) (< indentation (wisp--current-indent)))
+          (setq end (point-at-eol))
+          (setq indentation (wisp--current-indent))
+          (forward-line 1))
+        (cons begin end)))))
+
+
+(defun wisp--highlight-indentation-region (&optional begin end length)
+  "Colorize a buffer or the region between BEGIN and END up to LENGTH."
+  (interactive "r")
+  (let* ((region (wisp--find-begin-and-end-of-block-around-region begin end))
+         (begin (car region))
+         (end (cdr region)))
+    (save-mark-and-excursion
+      (with-silent-modifications
+        ;; change all affected blocks
+        (goto-char begin)
+        (backward-paragraph)
+        (setq begin (point))
+        (goto-char end)
+        (forward-paragraph)
+        (setq end (point))
+        (goto-char begin)
+        ;; delete our overlays that are fully inside the region, cut others short
+        (mapc (lambda (overlay)
+                (cond
+                 ;; delete leftovers
+                 ((not (overlay-start overlay))
+                  (setq wisp--highlight-indentation-overlays
+                        (delete overlay wisp--highlight-indentation-overlays)))
+                 ;; delete all that touch
+                 ((and (> (overlay-start overlay) begin)
+                       (< (overlay-end overlay) end))
+                  (delete-overlay overlay)
+                  (setq wisp--highlight-indentation-overlays
+                        (delete overlay wisp--highlight-indentation-overlays))))
+                nil)
+              wisp--highlight-indentation-overlays)
+	    (while (< (point) end)
+          (back-to-indentation)
+	      (let* ((start (point))
+                 (period (looking-at "\\. "))
+                 (colon (looking-at ": "))
+                 (empty-line (looking-at ": *$"))
+                 (raw-level (wisp--current-indentation-level (wisp--current-indent)))
+                 (level (if period (- raw-level 1) raw-level)))
+	        (end-of-line)
+            (let* ((line-end (point)))
+              (back-to-indentation)
+              (let ((overlay (make-overlay (point) line-end)))
+                (push overlay wisp--highlight-indentation-overlays)
+	            (overlay-put overlay
+				             'face
+				             `(:background
+				               ,(nth level wisp--bg-colors)))
+                (unless empty-line
+                  (while (string-match ": " (buffer-substring (point) line-end))
+                    (forward-char (match-beginning 0))
+                    (when (null (nth 8 (syntax-ppss))) ;; not within string or comment
+                      (let ((overlay (make-overlay (point) line-end)))
+                        (push overlay wisp--highlight-indentation-overlays)
+                        (setq level (+ level 1))
+	                    (overlay-put overlay
+				                     'face
+				                     `(:background
+				                       ,(nth level wisp--bg-colors)))
+	                    (overlay-put overlay
+                                     'priority
+                                     level)))
+                    (forward-char 1))))
+              (forward-line 1))))))))
+
+;;;###autoload
+(define-minor-mode wisp-color-indentation-minor-mode
+  "Mode to colorize the indentation level according to wisp-semanttics."
+  nil nil nil
+  :group 'wisp
+  :after-hook (if wisp-color-indentation-minor-mode
+                  (progn
+                    (wisp--highlight-indentation)
+                    (add-hook 'after-change-functions 'wisp--highlight-indentation-region nil t))
+                (progn
+                  (mapc 'delete-overlay wisp--highlight-indentation-overlays)
+                  (mapc (lambda (o) (pop wisp--highlight-indentation-overlays))
+                          wisp--highlight-indentation-overlays)
+                  (remove-hook  'after-change-functions 'wisp--highlight-indentation-region t))))
+
+;;;###autoload
+(define-minor-mode wisp-color-highlight-current-indentation-minor-mode
+  "Mode to colorize the indentation level according to wisp-semanttics. THIS IS A WORK IN PROGRESS."
+  nil nil nil
+  :group 'wisp
+  :after-hook (if wisp-color-highlight-current-indentation-minor-mode
+                  (progn
+                    (wisp-color-indentation-minor-mode t)
+                    (add-hook 'post-command-hook 'wisp--highlight-current-indentation-level nil t))
+                (progn
+                  (remove-hook  'post-command-hook 'wisp--highlight-current-indentation-level))))
+
+
+;;;###autoload
+(define-minor-mode wisp-color-highlight-current-subtree-minor-mode
+  "Mode to colorize the indentation level according to wisp-semanttics. THIS IS A WORK IN PROGRESS."
+  nil nil nil
+  :group 'wisp
+  :after-hook (if wisp-color-highlight-current-subtree-minor-mode
+                  (progn
+                    (wisp-color-indentation-minor-mode t)
+                    (add-hook 'post-command-hook 'wisp--highlight-subtree nil t))
+                (progn
+                  (remove-hook  'post-command-hook 'wisp--highlight-subtree))))
+
+
+(defun wisp--highlight-overlay-color (overlay)
+  "Replace the background color of the OVERLAY with a lighter color from wisp--brighter-colors."
+  (let ((color (plist-get (plist-get (overlay-properties overlay) 'face) :background)))
+    (let ((new-color (lax-plist-get wisp--brighter-colors color)))
+      (when new-color
+        (unless (lax-plist-get wisp--original-colors-dynamic new-color)
+          (setq wisp--original-colors-dynamic
+                (lax-plist-put wisp--original-colors-dynamic new-color color)))
+        (setq wisp--current-highlight-brighter-color new-color)
+        (overlay-put overlay 'face `(:background ,new-color))))))
+
+(defun wisp--overlay-background-color (overlay)
+  (plist-get (plist-get (overlay-properties overlay) 'face) :background))
+
+(defun wisp--restore-overlay-color (overlay)
+  "Replace the background color of the OVERLAY with its original color from wisp--brighter-colors."
+  (let ((color (wisp--overlay-background-color overlay)))
+    (let ((original-color (lax-plist-get wisp--original-colors-dynamic color)))
+      (when original-color
+        (overlay-put overlay 'face `(:background ,original-color))))))
+
+(defun wisp--highlight-current-indentation-level ()
+  "Highlight the current indentation level by using a brighter color.
+
+If the var wisp--brighter-colors defines a color for the current
+color of the overlay, the mapped color is set instead."
+  (interactive)
+  (with-silent-modifications
+    (let* ((overlays-with-bg-at-point
+            (remove-if-not
+             (lambda (overlay)
+               (let ((color (wisp--overlay-background-color overlay)))
+                 (or (lax-plist-get wisp--brighter-colors color)
+                     (lax-plist-get wisp--original-colors-dynamic color))))
+             (overlays-at (point) t)))
+           (wisp-overlay-at-point
+            (if overlays-with-bg-at-point
+                (list (car overlays-with-bg-at-point))
+              (list)))
+           (highlighted-overlays (mapc 'wisp--highlight-overlay-color wisp-overlay-at-point))
+           (region (wisp--find-begin-and-end-of-block-around-region (point) (point)))
+           (begin (car region))
+           (end (cdr region))
+           (overlays-in-region (overlays-in begin end))
+           (current-highlighting-color
+            (lax-plist-get wisp--original-colors-dynamic
+                           wisp--current-highlight-brighter-color))
+           (overlays-with-same-color
+            (remove-if-not
+             (lambda (overlay)
+               (equalp current-highlighting-color
+                       (wisp--overlay-background-color overlay)))
+             overlays-in-region))
+           (removed-overlays
+            (remove-if
+             (lambda (overlay)
+               (equalp wisp--current-highlight-brighter-color
+                       (wisp--overlay-background-color overlay)))
+             wisp--current-wisp-highlight-overlays-at-point)))
+      ;; restore all no longer highlighted overlays
+      (mapc 'wisp--restore-overlay-color removed-overlays)
+      ;; remember all highlighted overlays
+      (setq wisp--current-wisp-highlight-overlays-at-point
+            (delete-dups
+             (append
+              wisp--current-wisp-highlight-overlays-at-point
+              highlighted-overlays
+              (mapc 'wisp--highlight-overlay-color overlays-with-same-color))))
+      ;; remove no longer highlighted overlays
+      (dolist (overlay removed-overlays)
+        (setq wisp--current-wisp-highlight-overlays-at-point
+              (delq overlay wisp--current-wisp-highlight-overlays-at-point))))))
+
+
+(defun wisp--highlight-subtree ()
+  "Highlight the current indentation level by using a brighter color.
+
+If the var wisp--brighter-colors defines a color for the current
+color of the overlay, the mapped color is set instead."
+  (interactive)
+  (with-silent-modifications
+    (let* ((overlays-with-bg-at-point
+            (remove-if-not
+             (lambda (overlay)
+               (let ((color (wisp--overlay-background-color overlay)))
+                 (or (lax-plist-get wisp--brighter-colors color)
+                     (lax-plist-get wisp--original-colors-dynamic color))))
+             (overlays-at (point) t)))
+           (wisp-overlay-at-point
+            (if overlays-with-bg-at-point
+                (list (car overlays-with-bg-at-point))
+              (list)))
+           (highlighted-overlays (mapc 'wisp--highlight-overlay-color wisp-overlay-at-point))
+           (region (wisp--find-begin-and-end-of-subtree (point)))
+           (begin (car region))
+           (end (cdr region))
+           (overlays-in-region (overlays-in begin end))
+           (current-highlighting-color
+            (lax-plist-get wisp--original-colors-dynamic
+                           wisp--current-highlight-brighter-color))
+           (overlays-with-same-color
+            (remove-if-not
+             (lambda (overlay)
+               (equalp current-highlighting-color
+                       (wisp--overlay-background-color overlay)))
+             overlays-in-region))
+           (removed-overlays
+            (remove-if
+             (lambda (overlay)
+               (equalp wisp--current-highlight-brighter-color
+                       (wisp--overlay-background-color overlay)))
+             wisp--current-wisp-highlight-overlays-at-point)))
+      ;; restore all no longer highlighted overlays
+      (mapc 'wisp--restore-overlay-color removed-overlays)
+      ;; remember all highlighted overlays
+      (setq wisp--current-wisp-highlight-overlays-at-point
+            (delete-dups
+             (append
+              wisp--current-wisp-highlight-overlays-at-point
+              highlighted-overlays
+              (mapc 'wisp--highlight-overlay-color overlays-with-same-color))))
+      ;; remove no longer highlighted overlays
+      (dolist (overlay removed-overlays)
+        (setq wisp--current-wisp-highlight-overlays-at-point
+              (delq overlay wisp--current-wisp-highlight-overlays-at-point))))))
+
+
+;; (add-hook 'post-command-hook 'wisp--highlight-current-indentation-level nil t)
+
 
 (provide 'wisp-mode)
 ;;; wisp-mode.el ends here

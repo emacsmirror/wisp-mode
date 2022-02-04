@@ -9,12 +9,12 @@ define-module : examples yinyang
 
 define : main args
     ;; from http://en.wikipedia.org/wiki/Scheme_%28programming_language%29
-    let* 
+    let*
        :
          yin
              : lambda (cc) (display "@") cc
                call/cc : lambda (c) c
          yang
-             : lambda (cc) (display "*") cc 
+             : lambda (cc) (display "*") cc
                call/cc : lambda (c) c
        yin yang
