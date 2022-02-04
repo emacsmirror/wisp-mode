@@ -1,5 +1,5 @@
 wisp-mode 0.3.0
-- provide wisp-color-indentation-minor--mode that highlights the
+- provide wisp-color-indentation-minor-mode that highlights the
   indentation levels, following wisp-semantics (period and colon)
 
 wisp 1.0.7
