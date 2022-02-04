@@ -400,11 +400,13 @@ prev, not to prev+tab."
         (forward-line -1)
         (while (and (> (point) (point-min)) (if allow-same-indent (>= indentation (wisp--current-indent)) (> indentation (wisp--current-indent))))
           (setq begin (point-at-bol))
+          (setq indentation (wisp--current-indent))
           (forward-line -1))
         (goto-char end)
         (forward-line 1)
         (while (and (< (point) (point-max)) (< indentation (wisp--current-indent)))
           (setq end (point-at-eol))
+          (setq indentation (wisp--current-indent))
           (forward-line 1))
         (cons begin end)))))
 
@@ -491,7 +493,7 @@ prev, not to prev+tab."
 
 ;;;###autoload
 (define-minor-mode wisp-color-highlight-current-indentation-minor-mode
-  "Mode to colorize the indentation level according to wisp-semanttics."
+  "Mode to colorize the indentation level according to wisp-semanttics. THIS IS A WORK IN PROGRESS."
   nil nil nil
   :group 'wisp
   :after-hook (if wisp-color-highlight-current-indentation-minor-mode
@@ -504,7 +506,7 @@ prev, not to prev+tab."
 
 ;;;###autoload
 (define-minor-mode wisp-color-highlight-current-subtree-minor-mode
-  "Mode to colorize the indentation level according to wisp-semanttics."
+  "Mode to colorize the indentation level according to wisp-semanttics. THIS IS A WORK IN PROGRESS."
   nil nil nil
   :group 'wisp
   :after-hook (if wisp-color-highlight-current-subtree-minor-mode
