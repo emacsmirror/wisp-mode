@@ -42,7 +42,7 @@
 ;; 
 ;; ChangeLog:
 ;;
-;;  - 0.3.0: provide wisp-color-indentation-minor--mode
+;;  - 0.3.0: provide wisp-color-indentation-minor-mode
 ;;           that highlights the indentation levels, following wisp-semantics (period and colon)
 ;;  - 0.2.9: enabled imenu - thanks to Greg Reagle!
 ;;  - 0.2.8: use electric-indent-inhibit instead of electric-indent-local-mode
