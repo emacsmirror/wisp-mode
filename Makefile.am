@@ -28,7 +28,7 @@ $(guile_install_go_files): install-nobase_siteDATA
 
 EXTRA_DIST = $(WISP) bootstrap.sh bootstrap-reader.sh language examples tests wisp-repl-guile.sh testrunner.w wisp.py wisp.scm wisp.in m4 ob-wisp.el wisp-mode.el AUTHORS.in
 CLEANFILES = 1 2 $(GOBJECTS)
-DISTCLEANFILES = $(bin_SCRIPTS) $(nobase_site_DATA)
+DISTCLEANFILES = $(bin_SCRIPTS) $(nobase_site_DATA) .wisp-repl
 # don't spout out lots of stuff at each distcheck. Disable for debugging.
 AM_DISTCHECK_CONFIGURE_FLAGS="--quiet"
 
