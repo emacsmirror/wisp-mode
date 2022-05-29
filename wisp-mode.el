@@ -651,6 +651,7 @@ color of the overlay, the mapped color is set instead."
   (interactive)
   (let ((current-line (line-number-at-pos)))
     (save-excursion
+      (get-buffer-create "*wisp2lisp*")
       (set-buffer "*wisp2lisp*")
       (erase-buffer)
       (scheme-mode))
