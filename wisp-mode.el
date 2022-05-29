@@ -647,5 +647,31 @@ color of the overlay, the mapped color is set instead."
 ;; (add-hook 'post-command-hook 'wisp--highlight-current-indentation-level nil t)
 
 
+(defun wisp--wisp2lisp ()
+  (interactive)
+  (let ((current-line (line-number-at-pos)))
+    (save-excursion
+      (set-buffer "*wisp2lisp*")
+      (erase-buffer)
+      (scheme-mode))
+    (call-process "wisp2lisp" nil "*wisp2lisp*" nil (buffer-file-name))
+    (when (called-interactively-p)
+      (switch-to-buffer-other-window "*wisp2lisp*")
+      (beginning-of-buffer)
+      (forward-line (- current-line 1)))))
+
+(define-key wisp-mode-map (kbd "C-c C-w") 'wisp--wisp2lisp)
+
+(defun wisp--eval-with-geiser ()
+  (interactive)
+  (wisp--wisp2lisp)
+  (save-excursion
+    (set-buffer "*wisp2lisp*")
+    (geiser-eval-buffer)))
+
+(define-key wisp-mode-map (kbd "C-c C-b") 'wisp--eval-with-geiser)
+
+
+
 (provide 'wisp-mode)
 ;;; wisp-mode.el ends here
