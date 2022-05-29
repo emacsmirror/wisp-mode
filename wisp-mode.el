@@ -665,9 +665,11 @@ color of the overlay, the mapped color is set instead."
 
 (defun wisp--eval-with-geiser ()
   (interactive)
+  (require 'geiser)
   (wisp--wisp2lisp)
   (save-excursion
     (set-buffer "*wisp2lisp*")
+    (run-geiser 'guile)
     (geiser-eval-buffer)))
 
 (define-key wisp-mode-map (kbd "C-c C-b") 'wisp--eval-with-geiser)
