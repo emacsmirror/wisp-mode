@@ -8,7 +8,7 @@
 ;; Keywords: literate programming, reproducible research
 ;; Homepage: http://orgmode.org
 
-;; Version: 0.1
+;; Version: 0.2
 ;; Keywords: languages, lisp
 
 ;; This file is not part of GNU Emacs. It is modified from ob-python.el
@@ -31,6 +31,7 @@
 ;; Org-Babel support for evaluating wisp source code.
 
 ;; ChangeLog:
+;;  - 0.2: execute works with noweb references
 ;;  - 0.1: search for modules with .w extension
 
 
