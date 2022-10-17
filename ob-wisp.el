@@ -89,7 +89,7 @@ This function is called by `org-babel-execute-src-block'."
 	 (return-val (when (and (eq result-type 'value) (not session))
 		       (cdr (assoc :return params))))
 	 (preamble (cdr (assoc :preamble params)))
-         (full-body
+     (full-body
 	  (org-babel-expand-body:generic
 	   (concat body (if return-val (format ". %s\n" return-val) "\n"))
 	   params (org-babel-variable-assignments:wisp params)))
@@ -261,11 +261,14 @@ pretty-print (main) : open-output-file '%s'")
 If RESULT-TYPE equals 'output then return standard output as a
 string.  If RESULT-TYPE equals 'value then return the value of the
 last statement in BODY, as elisp."
-  (let ((raw
+  (let* ((full-body
+	      (org-babel-expand-body:generic body
+	       (list) (org-babel-variable-assignments:wisp (list))))
+         (raw
          (case result-type
            (output (org-babel-eval org-babel-wisp-command
                                    (concat (if preamble (concat preamble "\n"))
-                                           body)))
+                                           full-body)))
            (value (let ((tmp-file (org-babel-temp-file "wisp-")))
                     (org-babel-eval
                      org-babel-wisp-command
@@ -279,7 +282,7 @@ last statement in BODY, as elisp."
                         (lambda (line) (format "    %s" line))
                         (split-string
                          (org-remove-indentation
-                          (org-trim body))
+                          (org-trim full-body))
                          "[\r\n]") "\n")
                        (org-babel-process-file-name tmp-file 'noquote))))
                     (org-babel-eval-read-file tmp-file))))))
