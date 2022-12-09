@@ -837,7 +837,7 @@ cond
      display : wisp2lisp : read-all-from-port : current-input-port
      newline
    : or (null? (cdr (command-line))) (member "--help" (command-line))
-     format (current-error-port) "~a [ - | <filename> ]\n\nwith '-': read from stdin.\n" : car : command-line
+     format (current-error-port) "~a [ - | <filename> | --help ]\n\nwith '-': read from stdin.\n" : car : command-line
    : = 2 : length : command-line
     let*
          : filename : list-ref ( command-line ) 1
