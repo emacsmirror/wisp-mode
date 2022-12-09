@@ -1,3 +1,7 @@
+wisp 1.0.8
+- wisp2lisp can now process stdin when called with - as filename.
+  And it has help output.
+
 wisp-mode 0.3.0
 - provide wisp-color-indentation-minor-mode that highlights the
   indentation levels, following wisp-semantics (period and colon)
