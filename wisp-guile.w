@@ -1,4 +1,5 @@
 #!/usr/bin/env guile
+; -*- wisp -*-
 ; !#
 
 ;; This file might need to be licensed permissively for inclusion in
@@ -390,16 +391,19 @@ define : linestoindented lines
                             . splitindent
 
 
+define : read-all-from-port inport
+    let reader 
+        : text ""
+          nextchar : read-char inport
+        if : eof-object? nextchar
+            . text
+            reader 
+                string-append text : string nextchar
+                read-char inport
+
 define : read-whole-file filename
     let : : origfile : open-file filename "r"
-        let reader 
-            : text ""
-              nextchar : read-char origfile
-            if : eof-object? nextchar
-                . text
-                reader 
-                    string-append text : string nextchar
-                    read-char origfile
+        read-all-from-port origfile
 
 
 
@@ -828,7 +832,13 @@ define : wisp2lisp text
            join-lisp-lines clean-lines
 
  ; first step: Be able to mirror a file to stdout
-if : < 1 : length : command-line
+cond
+   : equal? '("-") : cdr : command-line
+     display : wisp2lisp : read-all-from-port : current-input-port
+     newline
+   : or (null? (cdr (command-line))) (member "--help" (command-line))
+     format (current-error-port) "~a [ - | <filename> ]\n\nwith '-': read from stdin.\n" : car : command-line
+   : = 2 : length : command-line
     let*
          : filename : list-ref ( command-line ) 1
            text : read-whole-file filename
@@ -840,4 +850,5 @@ if : < 1 : length : command-line
            lisp : wisp2lisp text
          display lisp
          newline
-    . #f
+   else
+       exit 2 ;; error
