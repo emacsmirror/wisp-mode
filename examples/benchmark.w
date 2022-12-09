@@ -30,6 +30,7 @@ define max-iterations 32 ;; at most 128 samples, currently corresponding to at l
 
 
 ;; stddev from rosetta code: http://rosettacode.org/wiki/Standard_deviation#Scheme
+;; (=> license: cc by-sa)
 define : stddev nums
     sqrt
         -

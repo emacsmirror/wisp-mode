@@ -10,6 +10,9 @@ exec -a "$0" guile -L $(dirname $(dirname $(realpath "$0"))) --language=wisp -x 
 ;; example usage: 
 ;; $ for i in bigloo bones chez chibi chicken- chickencsi- cyclone femtolisp foment gambitc gauche guile ironscheme kawa larceny mit mosh petite picrin racket rhizome rscheme s9fes sagittarius scheme48- stalin tinyscheme vicare ypsilon; do echo $i $(./evaluate-r7rs-benchmark.w guile-ecraven-benchmarks-result-2017-08-13.csv $i | grep Geom -A 2 | grep -v = | grep .); done | sed 's/(//' > evaluate-r7rs-benchmark.data
 ;; $ echo -e 'set xtics rotate by 90 right\nplot "< sort -g -k2 evaluate-r7rs-benchmark.data" using 0:2:xtic(1) with lines title "runtime: geometric mean multiple of fastest", "< sort -g -k2 evaluate-r7rs-benchmark.data" using 0:3:xtic(1) with lines title "successful tests"' | gnuplot -p
+;;
+;; evaluation into a table sorted by slowdown:
+;; $ for i in guile-3.0.5 guile-2 bigloo bones chez chibi- chicken cyclone femtolisp foment gambitc gauche ironscheme kawa loko mit petite racket s7 s9fes sagittarius; do  ./evaluate-r7rs-benchmark.w  ~/Downloads/all.csv $i | grep -A2 '===.*Geometric' | sed s/Geometric.*===// | sed 's/=== //' | xargs ; done 2>/dev/null | column -t | sort -k2 -g
 
 define-module : examples evaluate-r7rs-benchmark
     . #:export : main
@@ -113,6 +116,7 @@ define project-prefix
        car : cdr : cdr args
 
 define : main args
+    pretty-print args
     when : and {(length args) > 1} : equal? "--help" : second args 
          help args
          exit 0

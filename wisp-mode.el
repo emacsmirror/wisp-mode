@@ -42,7 +42,7 @@
 ;; 
 ;; ChangeLog:
 ;;
-;;  - 0.3.0: provide wisp-color-indentation-minor--mode
+;;  - 0.3.0: provide wisp-color-indentation-minor-mode
 ;;           that highlights the indentation levels, following wisp-semantics (period and colon)
 ;;  - 0.2.9: enabled imenu - thanks to Greg Reagle!
 ;;  - 0.2.8: use electric-indent-inhibit instead of electric-indent-local-mode
@@ -645,6 +645,35 @@ color of the overlay, the mapped color is set instead."
 
 
 ;; (add-hook 'post-command-hook 'wisp--highlight-current-indentation-level nil t)
+
+
+(defun wisp--wisp2lisp ()
+  (interactive)
+  (let ((current-line (line-number-at-pos)))
+    (save-excursion
+      (get-buffer-create "*wisp2lisp*")
+      (set-buffer "*wisp2lisp*")
+      (erase-buffer)
+      (scheme-mode))
+    (call-process "wisp2lisp" nil "*wisp2lisp*" nil (buffer-file-name))
+    (when (called-interactively-p)
+      (switch-to-buffer-other-window "*wisp2lisp*")
+      (beginning-of-buffer)
+      (forward-line (- current-line 1)))))
+
+(define-key wisp-mode-map (kbd "C-c C-w") 'wisp--wisp2lisp)
+
+(defun wisp--eval-with-geiser ()
+  (interactive)
+  (require 'geiser)
+  (wisp--wisp2lisp)
+  (save-excursion
+    (set-buffer "*wisp2lisp*")
+    (run-geiser 'guile)
+    (geiser-eval-buffer)))
+
+(define-key wisp-mode-map (kbd "C-c C-b") 'wisp--eval-with-geiser)
+
 
 
 (provide 'wisp-mode)
