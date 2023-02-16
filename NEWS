@@ -1,3 +1,7 @@
+wisp 1.0.9
+- remove limitation of the number of prefix underscores (_). Thanks to Maxime Devos for a much cleaner algorithm!
+- only set *port* encoding to UTF-8, do not change encoding for the application. Thanks to Maxime Devos!
+
 wisp 1.0.8
 - wisp2lisp can now process stdin when called with - as filename.
   And it has help output.

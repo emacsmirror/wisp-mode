@@ -38,7 +38,15 @@ exec guile -L $(dirname $(dirname $(realpath "$0"))) -e '(@@ (examples doctests)
 ;;     #((tests (test-eqv 'A (A))))
 ;;     #f)
 
-;; With wisp, you currently need to use the literal
+;; To run the tests when (main args) is called:
+
+;; (import (examples doctests))
+;; (define %this-module (current-module))
+;; (define (main args)
+;;          (doctests-testmod %this-module))
+
+
+;; With wisp, you need to use the literal
 ;; ##
 ;;    tests
 ;;        test-equal ...

@@ -8,11 +8,11 @@ exec guile -L . --language=wisp -s "$0" "$@"
 ;; preprocessed file.
 
 ;; Limitations:
-;; - only unescapes up to 12 leading underscores at line start (\____________)
 ;; - in some cases the source line information is missing in backtraces.
 ;;   check for set-source-property!
 
-;; Copyright (C) Arne Babenhauserheide (2014--2021). All Rights Reserved.
+;; Copyright (C) 2014--2023 Arne Babenhauserheide. All Rights Reserved.
+;; Copyright (C) 2023 Maxime Devos <maximedevos@telenet.be>
 
 ;; Permission is hereby granted, free of charge, to any person
 ;; obtaining a copy of this software and associated documentation
@@ -616,38 +616,22 @@ define : wisp-scheme-strip-indentation-markers lines
                   cdr unprocessed
 
 define : wisp-unescape-underscore-and-colon code
-         . "replace \\_ and \\: by _ and :"
-         match code
-             : a ...
-               map wisp-unescape-underscore-and-colon a
-             '\_
-               . '_
-             '\__
-               . '__
-             '\___
-               . '___
-             '\____
-               . '____
-             '\_____
-               . '_____
-             '\______
-               . '______
-             '\_______
-               . '_______
-             '\________
-               . '________
-             '\_________
-               . '_________
-             '\__________
-               . '__________
-             '\___________
-               . '___________
-             '\____________
-               . '____________
-             '\:
-               . ':
-             a
-               . a
+  . "replace \\_ and \\: by _ and :"
+  cond
+      : list? code
+        map wisp-unescape-underscore-and-colon code
+      : eq? code '\:
+        . ':
+      ;; Look for symbols like \____ and remove the \.
+      :  symbol? code
+         let : : as-string : symbol->string code
+           if
+               and : >= (string-length as-string) 2 ; at least a single underscore
+                     char=? (string-ref as-string 0) #\\ 
+                     string-every #\_ : substring as-string 1
+               string->symbol : substring as-string 1
+               . code
+      #t code
 
 
 define : wisp-replace-empty-eof code
@@ -698,7 +682,7 @@ define : wisp-replace-paren-quotation-repr code
                with-input-from-string ;; hack to defer to read
                    string-append "#"
                        with-output-to-string
-                           λ :
+                           lambda :
                              write : map wisp-replace-paren-quotation-repr a
                                      current-output-port
                    . read

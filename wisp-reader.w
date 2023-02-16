@@ -4,8 +4,9 @@
 
 ;;; adapted from guile-sweet: https://gitorious.org/nacre/guile-sweet/source/ae306867e371cb4b56e00bb60a50d9a0b8353109:sweet/common.scm
 
-;;; Copyright (C) 2005-2014 by David A. Wheeler and Alan Manuel K. Gloria
-;;; Copyright (C) Arne Babenhauserheide (2014--2021). All Rights Reserved.
+;;; Copyright (C) 2005--2014 by David A. Wheeler and Alan Manuel K. Gloria
+;;; Copyright (C) 2014--2023 Arne Babenhauserheide.
+;;; Copyright (C) 2023 Maxime Devos <maximedevos@telenet.be>
 
 ;;; Permission is hereby granted, free of charge, to any person
 ;;; obtaining a copy of this software and associated documentation
@@ -37,50 +38,30 @@ define-module : language wisp spec
   . #:use-module : language scheme decompile-tree-il
   . #:export : wisp
 
-; Set locale to something which supports unicode. Required to avoid using fluids.
-catch #t
-      lambda :
-        setlocale LC_ALL ""
-      lambda : key . parameters
-        let : : locale-fallback "en_US.UTF-8"
-          format (current-error-port)
-              string-join
-                  list ";;; Warning: setlocale LC_ALL \"\" failed with ~A: ~A"
-                     . "switching to explicit ~A locale. Please setup your locale."
-                     . "If this fails, you might need glibc support for unicode locales.\n"
-                  .  "\n;;;          "
-              . key parameters locale-fallback
-          catch #t
-            lambda :
-              setlocale LC_ALL locale-fallback
-            lambda : key . parameters
-              format (current-error-port)
-                  string-join
-                      list ";;; Warning: fallback setlocale LC_ALL ~A failed with ~A: ~A"
-                         . "Not switching to Unicode."
-                         . "You might need glibc support for unicode locales.\n"
-                      .  "\n;;;          "
-                  . locale-fallback key parameters
-
 ;;;
 ;;; Language definition
 ;;;
 
-define wisp-pending-sexps : list
-
-define : read-one-wisp-sexp port env
-         ;; allow using "# foo" as #(foo).
-         read-hash-extend #\# : λ (chr port) #\#
-         cond
-            : eof-object? : peek-char port
-              read-char port ; return eof: we’re done
-            else
-              let : : chunk : wisp-scheme-read-chunk port
-                cond
-                  : not : null? chunk
-                    car chunk
-                  else
-                    . #f
+define (read-one-wisp-sexp port env)
+  ;; Allow using "# foo" as #(foo).
+  ;; Don't use the globally-acting read-hash-extend, because this
+  ;; doesn't make much sense in parenthese-y (non-Wisp) Scheme.
+  ;; Instead, use fluids to temporarily add the extension.
+  read-hash-extend #\# : lambda (chr port) #\#
+  define %read-hash-procedures/parameter
+    fluid->parameter %read-hash-procedures
+  parameterize ((%read-hash-procedures/parameter
+                 `((#\# ,(lambda (chr port) #\# ))
+                   ,@(%read-hash-procedures/parameter))))
+    ;; Read Wisp files as UTF-8, to support non-ASCII characters.
+    ;; TODO: would be nice to support ';; coding: whatever' lines
+    ;; like in parenthese-y Scheme.
+    set-port-encoding! port "UTF-8"
+    if (eof-object? (peek-char port))
+        read-char port ; return eof: we’re done
+        let ((chunk (wisp-scheme-read-chunk port)))
+          and (not (null? chunk)) ; <---- XXX: maybe (pair? chunk)
+               car chunk
 
 define-language wisp
   . #:title "Wisp Scheme Syntax. See SRFI-119 for details. THIS IS EXPERIMENTAL, USE AT YOUR OWN RISK"
