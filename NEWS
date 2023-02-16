@@ -1,3 +1,6 @@
+wisp 1.0.10
+- only extend the reader for ## while reading wisp. Thanks to Maxime Devos for help to use fluids!
+
 wisp 1.0.9
 - remove limitation of the number of prefix underscores (_). Thanks to Maxime Devos for a much cleaner algorithm!
 - only set *port* encoding to UTF-8, do not change encoding for the application. Thanks to Maxime Devos!

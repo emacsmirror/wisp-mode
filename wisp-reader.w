@@ -42,25 +42,21 @@ define-module : language wisp spec
 ;;; Language definition
 ;;;
 
-define (read-one-wisp-sexp port env)
+define : read-one-wisp-sexp port env
   ;; Allow using "# foo" as #(foo).
   ;; Don't use the globally-acting read-hash-extend, because this
   ;; doesn't make much sense in parenthese-y (non-Wisp) Scheme.
   ;; Instead, use fluids to temporarily add the extension.
-  read-hash-extend #\# : lambda (chr port) #\#
-  define %read-hash-procedures/parameter
-    fluid->parameter %read-hash-procedures
-  parameterize ((%read-hash-procedures/parameter
-                 `((#\# ,(lambda (chr port) #\# ))
-                   ,@(%read-hash-procedures/parameter))))
+  with-fluids : : %read-hash-procedures : fluid-ref %read-hash-procedures
+    read-hash-extend #\# : lambda args #\#
     ;; Read Wisp files as UTF-8, to support non-ASCII characters.
     ;; TODO: would be nice to support ';; coding: whatever' lines
     ;; like in parenthese-y Scheme.
     set-port-encoding! port "UTF-8"
-    if (eof-object? (peek-char port))
+    if : eof-object? : peek-char port
         read-char port ; return eof: we’re done
-        let ((chunk (wisp-scheme-read-chunk port)))
-          and (not (null? chunk)) ; <---- XXX: maybe (pair? chunk)
+        let : : chunk : wisp-scheme-read-chunk port
+          and : not : null? chunk ; <---- XXX: maybe (pair? chunk)
                car chunk
 
 define-language wisp

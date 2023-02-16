@@ -752,7 +752,9 @@ Match is awesome!"
 
 define : wisp-scheme-read-chunk port
          . "Read and parse one chunk of wisp-code"
-         let : :  lines : wisp-scheme-read-chunk-lines port
+         with-fluids : : %read-hash-procedures : fluid-ref %read-hash-procedures
+           read-hash-extend #\# : lambda args #\#
+           let : :  lines : wisp-scheme-read-chunk-lines port
               wisp-make-improper
                 wisp-replace-empty-eof
                   wisp-unescape-underscore-and-colon
