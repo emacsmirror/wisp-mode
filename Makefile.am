@@ -61,16 +61,17 @@ syntaxtests.sh : wisp.scm tests/runtests-scheme-preprocessor.sh
 	chmod +x @abs_top_builddir@/$@
 
 .INTERMEDIATE: syntaxtestsreader.sh
-syntaxtestsreader.sh : ${WISP} wisp.scm tests/runtests-scheme-reader.sh
+syntaxtestsreader.sh : ${WISP} wisp.scm tests/runtests-scheme-reader.sh language/wisp.scm language/wisp/spec.scm language/wisp.go language/wisp/spec.go
 	echo '#!/usr/bin/env bash' > @abs_top_builddir@/$@
 	echo @abs_top_srcdir@/tests/runtests-scheme-reader.sh @abs_top_srcdir@ @abs_top_builddir@ >> @abs_top_builddir@/$@
 	chmod +x @abs_top_builddir@/$@
 
 .INTERMEDIATE: scripttests.sh
-scripttests.sh : .wisp-repl wisp.scm tests/runtests-scripts.sh
+scripttests.sh : .wisp-repl wisp.scm tests/runtests-scripts.sh language/wisp.scm language/wisp/spec.scm language/wisp.go language/wisp/spec.go
 	echo '#!/usr/bin/env bash' > @abs_top_builddir@/$@
-	echo @abs_top_srcdir@/tests/runtests-scripts.sh $(realpath $<) >> @abs_top_builddir@/$@
+	echo @abs_top_srcdir@/tests/runtests-scripts.sh "$(realpath $<)" "@abs_top_builddir@" "@abs_top_srcdir@" >> @abs_top_builddir@/$@
 	chmod +x @abs_top_builddir@/$@
+	cat @abs_top_builddir@/$@
 
 TESTS=syntaxtests.sh syntaxtestsreader.sh scripttests.sh
 
