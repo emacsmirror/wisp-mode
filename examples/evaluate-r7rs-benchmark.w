@@ -144,7 +144,9 @@ define : main args
       pretty-print : sort guile-data (λ (x y) (string<? (car x) (car y)))
       newline
       format #t "=== ~a slowdown ===\n\n" : string-locale-titlecase project-prefix
-      pretty-print : get-multiples-alist guile-data data-min-by-test
+      pretty-print
+        sort : get-multiples-alist guile-data data-min-by-test
+             λ (x y) (string<? (car x) (car y))
       newline
       format #t "=== ~a Geometric Mean slowdown (successful tests / total tests) ===\n\n" : string-locale-titlecase project-prefix
       format #t "~a (~a / ~a)"
