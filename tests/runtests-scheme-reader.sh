@@ -6,6 +6,12 @@
 # command. AC_CONFIG_LINKS in autoconf.ac ensures that this exists in
 # the build dir. Still this could be nicer.
 
+# set Guile if unset
+if [ -z ${GUILE+x} ]; then
+        GUILE=guile
+fi
+
+
 if [[ x"$1" == x"" || x"$1" == x"." ]]; then
     srcdir="$(./tests/realpath.sh "$(pwd)")"
 else
@@ -21,10 +27,10 @@ fi
 failed=0
 cd ${builddir}
 for i in ${srcdir}/tests/*.w; do
-    if guile -L ${builddir} --language=wisp ${srcdir}/testrunner.w "${i}" "${srcdir}/tests/$(basename "${i}" .w).scm" | grep -q "have equivalent content"; then
+    if $GUILE -L ${builddir} --language=wisp ${srcdir}/testrunner.w "${i}" "${srcdir}/tests/$(basename "${i}" .w).scm" | grep -q "have equivalent content"; then
         continue
     fi
-    echo test "$i" failed. Diff: $(guile -L ${builddir} --language=wisp ${srcdir}/testrunner.w "${i}" "${srcdir}/tests/$(basename "${i}" .w).scm")
+    echo test "$i" failed. Diff: $($GUILE -L ${builddir} --language=wisp ${srcdir}/testrunner.w "${i}" "${srcdir}/tests/$(basename "${i}" .w).scm")
     failed=$((failed + 1))
 done
 cd - >/dev/null # undo dir change
