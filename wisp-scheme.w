@@ -472,7 +472,7 @@ define* : wisp-scheme-indentation-to-parens lines
                       cons 0 : cdr : car lines
                       cdr lines
              throw 'wisp-syntax-error
-               format #f "The first symbol in a chunk must start at zero indentation. Indentation and line: ~A"
+               format #f "The first symbol in a chunk must start at zero indentation. Two blank lines start a new chunk. Indentation and line: ~A"
                  car lines
          let loop
            : processed '()
