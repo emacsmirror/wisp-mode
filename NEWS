@@ -1,3 +1,10 @@
+wisp 1.0.12 (2024-03-20):
+- do not include doctest output in examples (this broke install on Apple systems, because ._-files are interpreted as mac metadata)
+- better error reporting: Note in "chunk not at zero indentation" that a new chunk starts after two blank lines.
+- allow setting guile with GUILE= in tests/runtests-scheme-reader.sh (so you can run tests with a custom build of Guile)
+- do not test partial indent in tests/receive.w (that is a tolerated error, but not guaranteed)
+- examples/evaluate-r7rs-benchmark.w: sort the slowdown, too
+
 wisp 1.0.11 (2023-03-20):
 - increase resilience of make check for multi-job make in Guix
 
