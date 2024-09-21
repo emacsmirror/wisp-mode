@@ -235,10 +235,9 @@ Similar to `eval-defun'."
       (error (concat "There is no buffer named \"" wisp--eval-process-target "\": cannot send the command.
 To eval the current block, please use M-x shell and open a REPL there"))
     (save-mark-and-excursion
-      (backward-paragraph)
-      (set-mark (point))
-      (forward-paragraph)
-      (let* ((block (string-trim (buffer-substring-no-properties (mark) (point)))))
+      
+      (let* ((begin-and-end (wisp--find-begin-and-end-of-block-around-region (point) (point)))
+             (block (string-trim (buffer-substring-no-properties (car begin-and-end) (cdr begin-and-end)))))
         (process-send-string wisp--eval-process-target block)
         (process-send-string wisp--eval-process-target "\n\n")))))
 
@@ -388,9 +387,20 @@ To eval the current block, please use M-x shell and open a REPL there"))
     (save-mark-and-excursion
       (goto-char begin)
       (backward-paragraph)
+      (forward-line 1)
+      ;; move backwards until the first line has indentation zero
+      (while (not (= 0 (wisp--current-indent)))
+        (forward-line -1)
+        (backward-paragraph)
+        (forward-line 1))
       (setq begin (point))
       (goto-char end)
       (forward-paragraph)
+      ;; move forwards until the first line has indentation zero
+      (forward-line 1)
+      (while (not (= 0 (wisp--current-indent)))
+        (forward-paragraph)
+        (forward-line 1))
       (setq end (point))
       (goto-char begin))
     (cons begin end)))
