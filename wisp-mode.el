@@ -5,7 +5,7 @@
 ;;               from https://github.com/kwrooijen/indy/blob/master/indy.el
 
 ;; Author: Arne Babenhauserheide <arne_bab@web.de>
-;; Version: 0.3.0
+;; Version: 0.4.0
 ;; Keywords: languages, lisp, scheme
 ;; Homepage: http://www.draketo.de/english/wisp
 ;; Package-Requires: ((emacs "24.4"))
@@ -42,6 +42,8 @@
 ;; 
 ;; ChangeLog:
 ;;
+;;  - 0.4.0: provide wisp--eval-block (C-M-x)
+;;           to send the current block to a buffer nammed *shell*.
 ;;  - 0.3.0: provide wisp-color-indentation-minor-mode
 ;;           that highlights the indentation levels, following wisp-semantics (period and colon)
 ;;  - 0.2.9: enabled imenu - thanks to Greg Reagle!
@@ -61,6 +63,7 @@
 ;;; Code:
 
 (require 'scheme)
+(require 'comint)
 
 ; see http://www.emacswiki.org/emacs/DerivedMode
 
@@ -212,6 +215,19 @@ prev, not to prev+tab."
     (wisp--indent curr)))
 
 
+(defun wisp--eval-block ()
+  "Send the current block to a *shell* buffer similar to `eval-defun'."
+  (interactive)
+  (if (eq nil (member "*shell*" (mapcar #'buffer-name (buffer-list))))
+      (error "There is no buffer named \"*shell*\": cannot send the command.
+To eval the current block, please use M-x shell and open a REPL there")
+    (save-mark-and-excursion
+      (backward-paragraph)
+      (set-mark (point)) ;; C-M-x
+      (forward-paragraph)
+      (let* ((block (string-trim (buffer-substring-no-properties (mark) (point)))))
+        (process-send-string "*shell*" block)
+        (process-send-string "*shell*" "\n\n")))))
 
 ; use this mode automatically
 ;;;###autoload
@@ -236,7 +252,8 @@ prev, not to prev+tab."
   (define-key wisp-mode-map (kbd "C-c i") '("imenu" . imenu))
   (define-key wisp-mode-map (kbd "<tab>") '("indent line" . wisp--tab))
   (define-key wisp-mode-map (kbd "<backtab>") '("unindent line" . wisp--backtab))
-  (define-key wisp-mode-map "\r" '("wisp newline" . wisp--return)))
+  (define-key wisp-mode-map "\r" '("wisp newline" . wisp--return))
+  (define-key wisp-mode-map (kbd "C-M-x") '("eval block in *shell* buffer" . wisp--eval-block)))
 
 ; use this mode automatically
 ;;;###autoload

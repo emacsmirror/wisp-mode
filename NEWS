@@ -1,3 +1,6 @@
+wisp-mode 0.4.0 (2024-09-21):
+- provide wisp--eval-block (C-M-x) to send the current block to a buffer nammed *shell*.
+
 wisp 1.0.12 (2024-03-20):
 - do not include doctest output in examples (this broke install on Apple systems, because ._-files are interpreted as mac metadata)
 - better error reporting: Note in "chunk not at zero indentation" that a new chunk starts after two blank lines.
