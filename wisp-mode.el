@@ -215,19 +215,32 @@ prev, not to prev+tab."
     (wisp--indent curr)))
 
 
-(defun wisp--eval-block ()
-  "Send the current block to a *shell* buffer similar to `eval-defun'."
-  (interactive)
-  (if (eq nil (member "*shell*" (mapcar #'buffer-name (buffer-list))))
-      (error "There is no buffer named \"*shell*\": cannot send the command.
-To eval the current block, please use M-x shell and open a REPL there")
+(defvar wisp--eval-process-target "*shell*")
+(defun wisp--eval-block (arg)
+  "Send the current block to a target buffer (by default *shell*).
+
+Set ARG \\<mapvar> & \\[command] to select the target buffer.
+
+Similar to `eval-defun'."
+  (interactive "P")
+  (if (or arg
+          (not (process-live-p (get-buffer-process
+                                wisp--eval-process-target))))
+      (setq wisp--eval-process-target
+            (completing-read
+             "Shell: "
+             (seq-map (lambda (el) (buffer-name (process-buffer el)))
+                      (process-list)))))
+  (if (not (member wisp--eval-process-target (mapcar #'buffer-name (buffer-list))))
+      (error (concat "There is no buffer named \"" wisp--eval-process-target "\": cannot send the command.
+To eval the current block, please use M-x shell and open a REPL there"))
     (save-mark-and-excursion
       (backward-paragraph)
-      (set-mark (point)) ;; C-M-x
+      (set-mark (point))
       (forward-paragraph)
       (let* ((block (string-trim (buffer-substring-no-properties (mark) (point)))))
-        (process-send-string "*shell*" block)
-        (process-send-string "*shell*" "\n\n")))))
+        (process-send-string wisp--eval-process-target block)
+        (process-send-string wisp--eval-process-target "\n\n")))))
 
 ; use this mode automatically
 ;;;###autoload
