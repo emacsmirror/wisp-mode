@@ -44,6 +44,7 @@
 ;;
 ;;  - 0.4.0: provide wisp--eval-block (C-M-x)
 ;;           to send the current block to a buffer nammed *shell*.
+;;           wisp--find-begin-and-end-of-block-around-region can cope with empty lines
 ;;  - 0.3.0: provide wisp-color-indentation-minor-mode
 ;;           that highlights the indentation levels, following wisp-semantics (period and colon)
 ;;  - 0.2.9: enabled imenu - thanks to Greg Reagle!
@@ -377,7 +378,7 @@ To eval the current block, please use M-x shell and open a REPL there"))
   (wisp--highlight-indentation-region (point-min) (point-max)))
 
 (defun wisp--find-begin-and-end-of-block-around-region (begin end)
-  "Search around the current region and return the wisp-block around it."
+  "Search around the current region (BEGIN and END) and return the wisp-block around it."
   (let ((begin (if (not begin)
                    (point-min)
                  begin))
