@@ -218,7 +218,7 @@ prev, not to prev+tab."
     (wisp--indent curr)))
 
 
-(defvar wisp--eval-process-target "*shell*")
+(defvar wisp--eval-process-target nil)
 (defun wisp--eval-block (arg)
   "Send the current block to a target buffer (by default *shell*).
 
@@ -227,6 +227,7 @@ Set ARG \\<mapvar> & \\[command] to select the target buffer.
 Similar to `eval-defun'."
   (interactive "P")
   (if (or arg
+          (not wisp--eval-process-target) ;; unset
           (not (process-live-p (get-buffer-process
                                 wisp--eval-process-target))))
       (setq wisp--eval-process-target
