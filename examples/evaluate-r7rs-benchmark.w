@@ -19,6 +19,7 @@ define-module : examples evaluate-r7rs-benchmark
 
 import : ice-9 rdelim
          srfi srfi-1
+         only (srfi srfi-26) cut
          ice-9 pretty-print
          ice-9 optargs
          ice-9 i18n
@@ -115,8 +116,41 @@ define project-prefix
        . "guile"
        car : cdr : cdr args
 
+define : geometric-mean mult
+    ;; reference from python scipy.stats.gmean
+    ;; geometric-mean '(1.0099785094926073 1.0023913275138778 1.007278530431698 1.0 1.0151278532049126 1.0241147352628563 1.0 1.010569433451955 1.0434718138402814 1.0 1.0 1.0 1.0850467380086724 1.0 1.0 1.0 1.0 1.0 1.013460400318081 1.0369464196049085 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0276886283570255 1.008484300792353 1.0 1.0 1.0054499614298174 1.0276891928360352 1.0 1.008044878261761 1.0079167383470071 1.0 1.015322834394769 1.0 1.0 1.0 1.000833236233333 1.0137968054031663 1.0 1.0709384846564785 1.0228005056088003 1.0076113765052213 1.0 1.0 1.0 1.0 1.0037700207244038 1.003870266995729 1.0 1.0 1.0)
+    ;; => 1.008305573228468
+    ;; see https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.gmean.html#scipy.stats.gmean
+    if : null? mult
+       . #f
+       expt
+          apply * mult
+          / 1 : length mult
+
+define : geometric-std mult
+    ;; reference from python scipy.stats.gstd
+    ;; geometric-std '(1.0099785094926073 1.0023913275138778 1.007278530431698 1.0 1.0151278532049126 1.0241147352628563 1.0 1.010569433451955 1.0434718138402814 1.0 1.0 1.0 1.0850467380086724 1.0 1.0 1.0 1.0 1.0 1.013460400318081 1.0369464196049085 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0276886283570255 1.008484300792353 1.0 1.0 1.0054499614298174 1.0276891928360352 1.0 1.008044878261761 1.0079167383470071 1.0 1.015322834394769 1.0 1.0 1.0 1.000833236233333 1.0137968054031663 1.0 1.0709384846564785 1.0228005056088003 1.0076113765052213 1.0 1.0 1.0 1.0 1.0037700207244038 1.003870266995729 1.0 1.0 1.0)
+    ;; => 1.0164423836362904
+    define len : length mult
+    define d 1 ;; degrees of freedom; using default of 1
+    define ȳ ;; mean of the natural logarithms of the observations
+      / : apply + : map log mult
+        . len
+    if : null? mult
+       nan ;; not applicable
+       exp
+         sqrt
+           * {1 / {len - d}}
+             apply +
+               map : cut expt <> 2
+                 map : cut - <> ȳ
+                   map log mult
+
+define : format-geometric-mean-std g s_g
+    format #f "~a (~a to ~a)"
+         . g {g / s_g} {g * s_g}
+
 define : main args
-    pretty-print args
     when : and {(length args) > 1} : equal? "--help" : second args 
          help args
          exit 0
@@ -125,11 +159,12 @@ define : main args
         data-by-project : read-csv port
         data-min-by-test : min-alist-by-test data-by-project
         guile-data : select-project-data data-by-project project-prefix
+        err : current-error-port
       when : member "--csv" args
           ; display "test slowdown\n"
           map : λ (x) : apply format #t "~a ~a\n" : list (car x) (cdr x)            
                   get-multiples-alist guile-data data-min-by-test          
-          format #t "total ~a\n"
+          format err "total ~a\n"
               if : null? : get-multiples guile-data data-min-by-test
                   . #f
                   expt
@@ -137,24 +172,29 @@ define : main args
                       / 1 : length : get-multiples guile-data data-min-by-test
           exit 0
           
-      display "=== Best times ===\n\n"
+      format err "=== Best times ===\n\n"
       pretty-print : sort data-min-by-test (λ (x y) (string<? (car x) (car y)))
-      newline
-      format #t "=== ~a times ===\n\n" : string-locale-titlecase project-prefix
+        . err
+      newline err
+      format err "=== ~a times ===\n\n" : string-locale-titlecase project-prefix
       pretty-print : sort guile-data (λ (x y) (string<? (car x) (car y)))
-      newline
-      format #t "=== ~a slowdown ===\n\n" : string-locale-titlecase project-prefix
+        . err
+      newline err
+      format err "=== ~a slowdown ===\n\n" : string-locale-titlecase project-prefix
       pretty-print
         sort : get-multiples-alist guile-data data-min-by-test
              λ (x y) (string<? (car x) (car y))
-      newline
-      format #t "=== ~a Geometric Mean slowdown (successful tests / total tests) ===\n\n" : string-locale-titlecase project-prefix
-      format #t "~a (~a / ~a)"
-         if : null? : get-multiples guile-data data-min-by-test
-            . #f
-            expt
-               apply * : get-multiples guile-data data-min-by-test
-               / 1 : length : get-multiples guile-data data-min-by-test
+        . err
+      newline err
+      format err "=== ~a Geometric Mean slowdown (successful tests / total tests) ===\n\n" : string-locale-titlecase project-prefix
+      format err "~a (~a / ~a)\n"
+         geometric-mean : get-multiples guile-data data-min-by-test
          length : remove (λ(x) (equal? #f (string->number (car (cdr x))))) guile-data
          length guile-data
-      newline
+      let*
+          : data : get-multiples guile-data data-min-by-test
+            g : geometric-mean data
+            s_g : geometric-std data
+          format #t "~a: ~a\n" : string-locale-titlecase project-prefix
+              format-geometric-mean-std g s_g
+
