@@ -53,6 +53,7 @@ define-module : examples evaluate-r7rs-benchmark
 import : ice-9 rdelim
          srfi srfi-1
          only (srfi srfi-26) cut
+         only (srfi srfi-11) let-values
          ice-9 pretty-print
          ice-9 optargs
          ice-9 i18n
@@ -155,6 +156,15 @@ define : geometric-mean mult
           apply * mult
           / 1 : length mult
 
+define : geometric-std/given-gmean mult len d ȳ
+         exp
+           sqrt
+             * {1 / (max 1 {len - d})}
+               apply +
+                 map : cut expt <> 2
+                   map : cut - <> ȳ
+                     map log mult
+
 define : geometric-std mult
     ;; reference from python scipy.stats.gstd
     ;; geometric-std '(1.0099785094926073 1.0023913275138778 1.007278530431698 1.0 1.0151278532049126 1.0241147352628563 1.0 1.010569433451955 1.0434718138402814 1.0 1.0 1.0 1.0850467380086724 1.0 1.0 1.0 1.0 1.0 1.013460400318081 1.0369464196049085 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0276886283570255 1.008484300792353 1.0 1.0 1.0054499614298174 1.0276891928360352 1.0 1.008044878261761 1.0079167383470071 1.0 1.015322834394769 1.0 1.0 1.0 1.000833236233333 1.0137968054031663 1.0 1.0709384846564785 1.0228005056088003 1.0076113765052213 1.0 1.0 1.0 1.0 1.0037700207244038 1.003870266995729 1.0 1.0 1.0)
@@ -165,13 +175,24 @@ define : geometric-std mult
        nan ;; not applicable
        ;; mean of the natural logarithms of the observations
        let : : ȳ : * (/ 1 len) : apply + : map log mult
-         exp
-           sqrt
-             * {1 / {len - d}}
-               apply +
-                 map : cut expt <> 2
-                   map : cut - <> ȳ
-                     map log mult
+         geometric-std/given-gmean mult len d ȳ
+
+define : geometric-std/twosided mult
+    ;; reference from python scipy.stats.gstd
+    ;; geometric-std '(1.0099785094926073 1.0023913275138778 1.007278530431698 1.0 1.0151278532049126 1.0241147352628563 1.0 1.010569433451955 1.0434718138402814 1.0 1.0 1.0 1.0850467380086724 1.0 1.0 1.0 1.0 1.0 1.013460400318081 1.0369464196049085 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0276886283570255 1.008484300792353 1.0 1.0 1.0054499614298174 1.0276891928360352 1.0 1.008044878261761 1.0079167383470071 1.0 1.015322834394769 1.0 1.0 1.0 1.000833236233333 1.0137968054031663 1.0 1.0709384846564785 1.0228005056088003 1.0076113765052213 1.0 1.0 1.0 1.0 1.0037700207244038 1.003870266995729 1.0 1.0 1.0)
+    ;; => 1.0164423836362904
+    define len : length mult
+    define d 1 ;; degrees of freedom; using default of 1
+    if : null? mult
+       nan ;; not applicable
+       ;; mean of the natural logarithms of the observations
+       let*
+         : ȳ : * (/ 1 len) : apply + : map log mult
+           ȳexp : exp ȳ
+         let-values : : (lower upper) : partition (cut < <> ȳexp) mult
+           values
+             geometric-std/given-gmean lower (length lower) d ȳ
+             geometric-std/given-gmean upper (length upper) d ȳ
 
 define : format-geometric-mean-std g s_g
     format #f "~a (~a to ~a)"
@@ -232,7 +253,8 @@ define : main args
              length : remove (λ(x) (equal? #f (string->number (car (cdr x))))) guile-data
              length guile-data
           if : member "--for-gnuplot" args
-             format #t "~a ~a ~a ~a ~a ~a\n"
-               . title g {g / s_g} {g * s_g} success-count total-count
+             let-values : : (s_lower s_upper) : geometric-std/twosided data
+               format #t "~a ~a ~a ~a ~a ~a\n"
+                 . title g {g / s_lower} {g * s_upper} success-count total-count
              format #t "~a -- ~a -- (~a / ~a)\n"
                . gstr title success-count total-count
