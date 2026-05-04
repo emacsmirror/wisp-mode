@@ -15,7 +15,7 @@ exec guile -L $(dirname $(dirname $(realpath "$0"))) -e '(@@ (examples doctests-
 
 (define %this-module (current-module))
 (define (main args)
-       " Testing doctests"
+       "Testing doctests"
        #((tests ('mytest
               (test-assert #t)
               (test-assert #f))))

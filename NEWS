@@ -1,3 +1,18 @@
+wisp 1.0.13 (2026-05-04):
+- add r7rs benchmark graph example with split geometric std
+- fix: wisp.py missed escaping \ — thanks to leah2! (scheme IRC)
+- may the 4th be with you
+
+wisp-mode 0.4.1 (2025-11-09):
+- fix linting errors: custom, deprecations, and docstrings.
+- fix: remove the default to *shell* to avoid sending commands to an unexpected process
+
+wisp-mode 0.4.0 (2024-09-21):
+- provide wisp--eval-block (C-M-x) to send the current block to a buffer nammed *shell*.
+- wisp--find-begin-and-end-of-block-around-region can cope with empty lines.
+- wisp--eval-with-geiser converts wisp to regular scheme (with wisp2lisp) and pushes it to geiser. Thanks to cwebber!
+
+
 wisp 1.0.12 (2024-03-20):
 - do not include doctest output in examples (this broke install on Apple systems, because ._-files are interpreted as mac metadata)
 - better error reporting: Note in "chunk not at zero indentation" that a new chunk starts after two blank lines.

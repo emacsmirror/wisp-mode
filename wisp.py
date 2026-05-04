@@ -101,7 +101,7 @@ class Line:
                 line = (i)*" " + line[i:]
         # \_ escapes the underscore at the beginning of a line, so you
         # can use identifiers which only consist of underscores.
-        elif line.startswith("\_"):
+        elif line.startswith("\\_"):
             line = "_" + line[2:]
             
         #: prefix to go around the outer bracket: '(, ,( or `(
