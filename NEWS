@@ -1,3 +1,12 @@
+wisp 1.0.13 (2026-05-04):
+- add r7rs benchmark graph example with split geometric std
+- fix: wisp.py missed escaping \ — thanks to leah2! (scheme IRC)
+- may the 4th be with you
+
+wisp-mode 0.4.1 (2025-11-09):
+- fix linting errors: custom, deprecations, and docstrings.
+- fix: remove the default to *shell* to avoid sending commands to an unexpected process
+
 wisp-mode 0.4.0 (2024-09-21):
 - provide wisp--eval-block (C-M-x) to send the current block to a buffer nammed *shell*.
 - wisp--find-begin-and-end-of-block-around-region can cope with empty lines.
