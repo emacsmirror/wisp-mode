@@ -42,7 +42,8 @@
 ;; 
 ;; ChangeLog:
 ;;
-;;  - 0.4.1  fix linting errors: custom, deprecations, and docstrings.
+;;  - 0.4.2: specialize fill-reindent (M-q) not to break strings.
+;;  - 0.4.1: fix linting errors: custom, deprecations, and docstrings.
 ;;  - 0.4.0: provide wisp--eval-block (C-M-x)
 ;;           to send the current block to a buffer nammed *shell*.
 ;;           wisp--find-begin-and-end-of-block-around-region can cope with empty lines.
@@ -246,6 +247,16 @@ To eval the current block, please use M-x shell and open a REPL there"))
         (process-send-string wisp--eval-process-target block)
         (process-send-string wisp--eval-process-target "\n\n")))))
 
+
+(defun wisp--fill-reindent (&optional justify)
+  (interactive "P")
+  "Reindent around point (without breaking strings).
+JUSTIFY is the same as in `fill-paragraph'."
+  (let ((in-string-p (nth 3 (syntax-ppss))))
+       (unless in-string-p
+         (prog-fill-reindent-defun-default justify))))
+
+
 ; use this mode automatically
 ;;;###autoload
 (define-derived-mode wisp-mode
@@ -268,6 +279,7 @@ To eval the current block, please use M-x shell and open a REPL there"))
   ;; bind keys to \r, not (kbd "<return>") to allow completion to work on RET
   (define-key wisp-mode-map (kbd "C-c i") '("imenu" . imenu))
   (define-key wisp-mode-map (kbd "<tab>") '("indent line" . wisp--tab))
+  (define-key wisp-mode-map (kbd "M-q") '("fill and reindent arounud point" . wisp--fill-reindent))
   (define-key wisp-mode-map (kbd "<backtab>") '("unindent line" . wisp--backtab))
   (define-key wisp-mode-map "\r" '("wisp newline" . wisp--return))
   (define-key wisp-mode-map (kbd "C-M-x") '("eval block in *shell* buffer" . wisp--eval-block)))
