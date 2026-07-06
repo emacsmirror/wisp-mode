@@ -43,6 +43,8 @@
 ;; ChangeLog:
 ;;
 ;;  - 0.4.2: specialize fill-reindent (M-q) not to break strings.
+;;           fix: wisp-prev-indent-lower-than must ignore lines in strings and pure comment-lines but did not
+;;           implement wisp--backward-up-list (C-M-u) to move upwards in parentheses or indentation
 ;;  - 0.4.1: fix linting errors: custom, deprecations, and docstrings.
 ;;  - 0.4.0: provide wisp--eval-block (C-M-x)
 ;;           to send the current block to a buffer nammed *shell*.
@@ -266,6 +268,37 @@ JUSTIFY is the same as in `fill-paragraph'."
        (unless in-string-p
          (prog-fill-reindent-defun-default justify))))
 
+(defun wisp--backward-up-list (&optional arg)
+  (interactive "^p")
+  "Move ARG levels of parentheses or indentation levels up (default: 1)"
+  (let ((in-parens t)
+        (direction (if (< arg 0) -1 1)))
+    ;; in parentheses
+    (while (and in-parens (/= arg 0))
+      (condition-case nil
+          (progn
+            (backward-up-list direction t nil)
+            (setq arg (- arg direction)))
+        (scan-error (setq in-parens nil)))
+      )
+    ;; outside parens
+    (while (/= arg 0)
+      (let ((ind (current-column)))
+        (cond
+         ((> ind (wisp--current-indent))
+          ;; go backwards to ": " on the same line, else to indentation; ignore the : just before point.
+          (if (string-match ": " (buffer-substring (line-beginning-position) (- (point) 2)))
+              (progn
+                (backward-sexp) ;; avoid hanging at " ^
+                (search-backward ": " (line-beginning-position))
+                (forward-sexp 2)
+                (backward-sexp))
+            (back-to-indentation)))
+         ((= ind 0)
+          (user-error "At top level"))
+         ;; previous less indented line
+         (t (wisp--move-to-previous-line-with-indent-lower-than ind)))
+        (setq arg (- arg direction))))))
 
 ; use this mode automatically
 ;;;###autoload
@@ -289,7 +322,8 @@ JUSTIFY is the same as in `fill-paragraph'."
   ;; bind keys to \r, not (kbd "<return>") to allow completion to work on RET
   (define-key wisp-mode-map (kbd "C-c i") '("imenu" . imenu))
   (define-key wisp-mode-map (kbd "<tab>") '("indent line" . wisp--tab))
-  (define-key wisp-mode-map (kbd "M-q") '("fill and reindent arounud point" . wisp--fill-reindent))
+  (define-key wisp-mode-map (kbd "M-q") '("fill and reindent around point" . wisp--fill-reindent))
+  (define-key wisp-mode-map (kbd "C-M-u") '("move sexp up" . wisp--backward-up-list))
   (define-key wisp-mode-map (kbd "<backtab>") '("unindent line" . wisp--backtab))
   (define-key wisp-mode-map "\r" '("wisp newline" . wisp--return))
   (define-key wisp-mode-map (kbd "C-M-x") '("eval block in *shell* buffer" . wisp--eval-block)))
