@@ -132,27 +132,37 @@
     (back-to-indentation)
     (current-column)))
 
+(defun wisp--move-to-previous-line-with-indent-lower-than (indent)
+  "Go backwards until a line has indentation lower than INDENT. Ignore lines in string."
+  (forward-line -1)
+  (back-to-indentation)
+  (while (or (wisp--line-empty-or-comment?)
+             (nth 8 (syntax-ppss)) ;; in string or in comment
+             (and (>= (wisp--current-indent) indent)
+                  (> (wisp--current-indent) 0)))
+    (forward-line -1)
+    (back-to-indentation)))
+
 (defun wisp-prev-indent-lower-than (indent)
   "Get the indentation which is lower than INDENT among previous lines."
   (save-mark-and-excursion
-    (forward-line -1)
-    (while (or (wisp--line-empty?)
-               (and (>= (wisp--current-indent) indent)
-                    (> (wisp--current-indent) 0)))
-      (forward-line -1))
-    (back-to-indentation)
+    (wisp--move-to-previous-line-with-indent-lower-than indent)
     (current-column)))
 
 (defun wisp--line-empty? ()
   "Check if the current line is empty."
   (string-match "^\s*$" (wisp--get-current-line)))
 
+(defun wisp--line-empty-or-comment? ()
+  "Check if the current line is empty."
+  (string-match "^\s*;.*$" (wisp--get-current-line)))
+
 (defun wisp--get-current-line ()
   "Get the current line as a string."
   (buffer-substring-no-properties (pos-bol) (pos-eol)))
 
 (defun wisp--current-indent ()
-  "Get the amount of indentation spaces if the current line."
+  "Get the amount of indentation spaces of the current line."
   (save-mark-and-excursion
     (back-to-indentation)
     (current-column)))
