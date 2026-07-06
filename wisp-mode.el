@@ -5,7 +5,7 @@
 ;;               from https://github.com/kwrooijen/indy/blob/master/indy.el
 
 ;; Author: Arne Babenhauserheide <arne_bab@web.de>
-;; Version: 0.4.2
+;; Version: 0.4.3
 ;; Keywords: languages, lisp, scheme
 ;; Homepage: http://www.draketo.de/english/wisp
 ;; Package-Requires: ((emacs "24.4"))
@@ -42,9 +42,9 @@
 ;; 
 ;; ChangeLog:
 ;;
-;;  - 0.4.2: specialize fill-reindent (M-q) not to break strings.
-;;           fix: wisp-prev-indent-lower-than must ignore lines in strings and pure comment-lines but did not
+;;  - 0.4.3: fix: wisp-prev-indent-lower-than must ignore lines in strings and pure comment-lines but did not
 ;;           implement wisp--backward-up-list (C-M-u) to move upwards in parentheses or indentation
+;;  - 0.4.2: specialize fill-reindent (M-q) not to break strings.
 ;;  - 0.4.1: fix linting errors: custom, deprecations, and docstrings.
 ;;  - 0.4.0: provide wisp--eval-block (C-M-x)
 ;;           to send the current block to a buffer nammed *shell*.
