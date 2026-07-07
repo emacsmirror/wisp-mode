@@ -129,10 +129,26 @@
   "Get the amount of indentation spaces of the previous line."
   (save-mark-and-excursion
     (forward-line -1)
-    (while (wisp--line-empty?)
+    (while (wisp--line-empty-or-comment?)
       (forward-line -1))
     (back-to-indentation)
     (current-column)))
+
+(defun wisp--next-indent ()
+  "Get the amount of indentation spaces of the next line. Ignores lines starting with ."
+  (save-mark-and-excursion
+    (forward-line 1)
+    (while (or (wisp--line-empty-or-comment?)
+               (wisp--line-starts-with-period))
+      (forward-line 1))
+    (back-to-indentation)
+    (current-column)))
+
+(defun wisp--line-starts-with-period ()
+  "Check whether the current line starts with a colon."
+  (save-mark-and-excursion
+    (back-to-indentation)
+    (looking-at ". ")))
 
 (defun wisp--move-to-previous-line-with-indent-lower-than (indent)
   "Go backwards until a line has indentation lower than INDENT. Ignore lines in string."
@@ -271,16 +287,13 @@ JUSTIFY is the same as in `fill-paragraph'."
 (defun wisp--backward-up-list (&optional arg)
   (interactive "^p")
   "Move ARG levels of parentheses or indentation levels up (default: 1)"
-  (let ((in-parens t)
-        (direction (if (< arg 0) -1 1)))
+  (let ((direction (if (< arg 0) -1 1)))
+    ;; TODO: if < 0: use down-list
     ;; in parentheses
-    (while (and in-parens (/= arg 0))
-      (condition-case nil
-          (progn
-            (backward-up-list direction t nil)
-            (setq arg (- arg direction)))
-        (scan-error (setq in-parens nil)))
-      )
+    (while (and (/= arg 0)
+                (/= (car (syntax-ppss)) 0)) ;; in parens?
+      (backward-up-list direction t nil)
+      (setq arg (- arg direction)))
     ;; outside parens
     (while (/= arg 0)
       (let ((ind (current-column)))
@@ -291,6 +304,7 @@ JUSTIFY is the same as in `fill-paragraph'."
               (progn
                 (backward-sexp) ;; avoid hanging at " ^
                 (search-backward ": " (line-beginning-position))
+                ;; align with start of next symbol
                 (forward-sexp 2)
                 (backward-sexp))
             (back-to-indentation)))
