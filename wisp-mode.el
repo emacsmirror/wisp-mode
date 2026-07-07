@@ -5,7 +5,7 @@
 ;;               from https://github.com/kwrooijen/indy/blob/master/indy.el
 
 ;; Author: Arne Babenhauserheide <arne_bab@web.de>
-;; Version: 0.4.3
+;; Version: 0.4.4
 ;; Keywords: languages, lisp, scheme
 ;; Homepage: http://www.draketo.de/english/wisp
 ;; Package-Requires: ((emacs "24.4"))
@@ -42,6 +42,7 @@
 ;; 
 ;; ChangeLog:
 ;;
+;;  - 0.4.4: implement wisp--down-list (C-M-d) to move downwards in indentation or parentheses
 ;;  - 0.4.3: fix: wisp-prev-indent-lower-than must ignore lines in strings and pure comment-lines but did not
 ;;           implement wisp--backward-up-list (C-M-u) to move upwards in parentheses or indentation
 ;;  - 0.4.2: specialize fill-reindent (M-q) not to break strings.
@@ -314,6 +315,67 @@ JUSTIFY is the same as in `fill-paragraph'."
          (t (wisp--move-to-previous-line-with-indent-lower-than ind)))
         (setq arg (- arg direction))))))
 
+(defun wisp--line-contains-opening-paren ()
+  "Check whether there is an opening parenthesis in the current line."
+  (string-match "(" (buffer-substring (point) (line-end-position))))
+
+(defun wisp--down-list (&optional arg)
+  "Move ARG levels of parentheses or indentation levels down (default: 1)."
+  (interactive "^p")
+  (let ((direction (if (< arg 0) -1 1))
+        (can-go-down-p t))
+    ;; operation outside parens
+    (while (and can-go-down-p
+                (/= arg 0)
+                (= (car (syntax-ppss)) 0)
+                (not (nth 8 (syntax-ppss))))
+      ;; if there’s a colon-sub-list, move into the sublist
+      (cond
+       ((string-match ": " (buffer-substring (point) (line-end-position)))
+        (search-forward ": " (line-end-position))
+        ;; align with start of next symbol
+        (forward-sexp)
+        (backward-sexp)
+        (setq arg (- arg direction)))
+       ;; if we’re outside a sub-list, check for the next line
+       ((and (not (string-match ": " (buffer-substring (line-beginning-position) (point))))
+             (< (wisp--current-indent) (wisp--next-indent)))
+        (forward-line)
+        (while (or (wisp--line-empty-or-comment?)
+                   (and (wisp--line-starts-with-period)
+                        (not (string-match ": " (buffer-substring (point) (line-end-position))))
+                        (not (wisp--line-contains-opening-paren)))) ;; if there’s a paren after the point, we need to go there
+          (forward-line))
+        (back-to-indentation)
+        (unless (or (wisp--line-contains-opening-paren)
+                    (and
+                     (string-match ": " (buffer-substring (point) (line-end-position)))
+                     (wisp--line-starts-with-period)))
+          (setq arg (- arg direction))))
+       ;; if in a continuation line (starts with period) the next line is deeper if same indent.
+       ((and (not (string-match ": " (buffer-substring (line-beginning-position) (point))))
+             (wisp--line-starts-with-period)
+             (not (wisp--line-contains-opening-paren))
+             (= (wisp--current-indent) (wisp--next-indent)))
+        (forward-line)
+        (while (or (wisp--line-empty-or-comment?)
+                   (and (wisp--line-starts-with-period)
+                        (not (string-match ": " (buffer-substring (point) (line-end-position))))
+                        (not (wisp--line-contains-opening-paren)))) ;; if there’s a paren after the point, we need to go there
+          (forward-line))
+        (back-to-indentation)
+        (unless (or (wisp--line-contains-opening-paren)
+                    (and
+                     (string-match ": " (buffer-substring (point) (line-end-position)))
+                     (wisp--line-starts-with-period)))
+          (setq arg (- arg direction))))
+       (t (setq can-go-down-p nil))))
+    ;; if there are parentheses in the line, jump into them.
+    (when (/= arg 0)
+      (if (wisp--line-contains-opening-paren)
+        (down-list arg)
+      (user-error "At deepest level")))))
+
 ; use this mode automatically
 ;;;###autoload
 (define-derived-mode wisp-mode
@@ -338,6 +400,7 @@ JUSTIFY is the same as in `fill-paragraph'."
   (define-key wisp-mode-map (kbd "<tab>") '("indent line" . wisp--tab))
   (define-key wisp-mode-map (kbd "M-q") '("fill and reindent around point" . wisp--fill-reindent))
   (define-key wisp-mode-map (kbd "C-M-u") '("move sexp up" . wisp--backward-up-list))
+  (define-key wisp-mode-map (kbd "C-M-d") '("move sexp up" . wisp--down-list))
   (define-key wisp-mode-map (kbd "<backtab>") '("unindent line" . wisp--backtab))
   (define-key wisp-mode-map "\r" '("wisp newline" . wisp--return))
   (define-key wisp-mode-map (kbd "C-M-x") '("eval block in *shell* buffer" . wisp--eval-block)))
