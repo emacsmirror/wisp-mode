@@ -42,6 +42,8 @@
 ;; 
 ;; ChangeLog:
 ;;
+;;  - 0.4.5: implement wisp--forward-sexp (C-M-f) and wisp--backward-sexp (C-M-b) to move within the same depth.
+;;           wisp--tab (TAB) and wisp--backtab (S-TAB) now operate on the region if it is active
 ;;  - 0.4.4: implement wisp--down-list (C-M-d) to move downwards in indentation or parentheses
 ;;  - 0.4.3: fix: wisp-prev-indent-lower-than must ignore lines in strings and pure comment-lines but did not
 ;;           implement wisp--backward-up-list (C-M-u) to move upwards in parentheses or indentation
@@ -219,7 +221,7 @@
    (t num)))
 
 (defun wisp--indent (num)
-  "Indent the current line by the amount of provided in NUM."
+  "Set the indentation of the current line to NUM."
   (let ((currcol (current-column))
         (currind (wisp--current-indent)))
     (unless (equal currind num)
@@ -228,8 +230,8 @@
       (unless (<= currcol currind)
         (move-to-column (wisp--fix-num (+ num (- currcol currind))))))))
 
-(defun wisp--tab ()
-  "Cycle through indentations depending on the previous line.
+(defun wisp--tab (&optional start stop)
+  "Cycle the region between START and STOP through indentations depending on the preceding line.
 
 If the current indentation is equal to the previous line,
    increase indentation by one tab,
@@ -237,33 +239,64 @@ if the current indentation is zero,
    indent up to the previous line
 if the current indentation is less than the previous line,
    increase by one tab, but at most to the previous line."
-  (interactive)
-  (let* ((curr (wisp--current-indent))
-         (prev (wisp--prev-indent))
-         (width
-          (cond
-           ((equal curr prev) (+ prev tab-width))
-           ((= curr 0) prev)
-           ((< curr prev) (min prev (+ curr tab-width)))
-           (t  0))))
-    (wisp--indent width)))
+  (interactive "R")
+  (let ((l0 (line-number-at-pos (point)))(c0 (current-column)))
+    (when start (goto-char start))
+    (let ((linecount (if (and start stop)
+                         (- (line-number-at-pos stop)
+                            (line-number-at-pos start))
+                       1)))
+      (let* ((curr (wisp--current-indent))
+             (prev (wisp--prev-indent))
+             (width
+              (cond
+               ((equal curr prev) (+ prev tab-width))
+               ((= curr 0) prev)
+               ((< curr prev) (min prev (+ curr tab-width)))
+               (t  0)))
+             (diff (- width curr)))
+        (unless stop
+          (wisp--indent (+ (wisp--current-indent) diff)))
+        (while (and stop (< (point) stop))
+          (wisp--indent (+ (wisp--current-indent) diff))
+          (forward-line))
+        (goto-line l0)
+        (forward-char (+ c0 diff))
+        ;; preserve region
+        (setq deactivate-mark nil)))))
 
-(defun wisp--backtab ()
-  "Cycle through indentations depending on the previous line.
+(defun wisp--backtab (&optional start stop)
+  "Cycle the region between START and STOP through indentations depending on the preceding line.
 
 This is the inverse of `wisp--tab', except that it jums from 0 to
 prev, not to prev+tab."
-  (interactive)
-  (let* ((curr (wisp--current-indent))
-         (prev (wisp--prev-indent))
-         (width
-          (cond
-           ((<= curr prev)
-            (wisp-prev-indent-lower-than curr))
-           ((= curr 0) prev)
-           ((> curr prev) prev)
-           (t  0))))
-    (wisp--indent width)))
+  (interactive "R")
+  (let ((p0 (point))(l0 (line-number-at-pos (point)))(c0 (current-column)))
+    (when start (goto-char start))
+    (let ((linecount (if (and start stop)
+                         (- (line-number-at-pos stop)
+                            (line-number-at-pos start))
+                       1)))
+    (when start (goto-char start))
+    (let* ((curr (wisp--current-indent))
+           (prev (wisp--prev-indent))
+           (width
+            (cond
+             ((<= curr prev)
+              (wisp-prev-indent-lower-than curr))
+             ((= curr 0) prev)
+             ((> curr prev) prev)
+             (t  0)))
+           (diff (- width curr)))
+        (unless stop
+          (wisp--indent (+ (wisp--current-indent) diff)))
+        (while (and stop (< (point) stop))
+          (wisp--indent (+ (wisp--current-indent) diff))
+          (forward-line))
+        (goto-line l0)
+        (forward-char (+ c0 diff))
+        ;; preserve region
+        (setq deactivate-mark nil)))))
 
 (defun wisp--return ()
   "Enter a newline while keeping indentation."
