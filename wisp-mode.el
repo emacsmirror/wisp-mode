@@ -126,23 +126,32 @@
      (" : \\| \\. " . font-lock-keyword-face) ; leading : or .
      ))
   "Default highlighting expressions for wisp mode.")
+
+(defun wisp--next-regular-line (direction)
+  "Get the amount of indentation spaces of the next line. Ignores empty lines and lines starting with ."
+  (forward-line direction)
+  (while (or (wisp--line-empty-or-comment?)
+             (wisp--line-starts-with-period))
+    (forward-line direction))
+  (back-to-indentation))
+
+(defun wisp--next-code-line (direction)
+  "Get the amount of indentation spaces of the next line. Ignores empty lines."
+  (forward-line direction)
+  (while (or (wisp--line-empty-or-comment?))
+    (forward-line direction))
+  (back-to-indentation))
+
 (defun wisp--prev-indent ()
   "Get the amount of indentation spaces of the previous line."
   (save-mark-and-excursion
-    (forward-line -1)
-    (while (wisp--line-empty-or-comment?)
-      (forward-line -1))
-    (back-to-indentation)
+    (wisp--next-code-line -1)
     (current-column)))
 
 (defun wisp--next-indent ()
   "Get the amount of indentation spaces of the next line. Ignores lines starting with ."
   (save-mark-and-excursion
-    (forward-line 1)
-    (while (or (wisp--line-empty-or-comment?)
-               (wisp--line-starts-with-period))
-      (forward-line 1))
-    (back-to-indentation)
+    (wisp--next-regular-line 1)
     (current-column)))
 
 (defun wisp--line-starts-with-period ()
@@ -162,6 +171,22 @@
     (forward-line -1)
     (back-to-indentation)))
 
+(defun wisp--move-to-line-with-same-indent (indent direction)
+  "Go into DIRECTION until a line has indentation equal to INDENT. Ignore lines in string."
+  (let ((pos (save-mark-and-excursion
+               (forward-line direction)
+               (back-to-indentation)
+               (while (or (wisp--line-empty-or-comment?)
+                          (nth 8 (syntax-ppss)) ;; in string or in comment
+                          (> (wisp--current-indent) indent))
+                 (forward-line direction)
+                 (back-to-indentation))
+               (if (= (wisp--current-indent) indent)
+                   (point)
+                 nil))))
+    (if pos (goto-char pos)
+      (user-error (if (= -1 direction) "No previous sexp" "No next sexp")))))
+
 (defun wisp-prev-indent-lower-than (indent)
   "Get the indentation which is lower than INDENT among previous lines."
   (save-mark-and-excursion
@@ -174,7 +199,7 @@
 
 (defun wisp--line-empty-or-comment? ()
   "Check if the current line is empty."
-  (string-match "^\s*;.*$" (wisp--get-current-line)))
+  (string-match "^\s*\\(;.*\\)?$" (wisp--get-current-line)))
 
 (defun wisp--get-current-line ()
   "Get the current line as a string."
@@ -322,59 +347,108 @@ JUSTIFY is the same as in `fill-paragraph'."
 (defun wisp--down-list (&optional arg)
   "Move ARG levels of parentheses or indentation levels down (default: 1)."
   (interactive "^p")
-  (let ((direction (if (< arg 0) -1 1))
-        (can-go-down-p t))
-    ;; operation outside parens
-    (while (and can-go-down-p
-                (/= arg 0)
-                (= (car (syntax-ppss)) 0)
-                (not (nth 8 (syntax-ppss))))
-      ;; if there’s a colon-sub-list, move into the sublist
-      (cond
-       ((string-match ": " (buffer-substring (point) (line-end-position)))
-        (search-forward ": " (line-end-position))
-        ;; align with start of next symbol
-        (forward-sexp)
-        (backward-sexp)
-        (setq arg (- arg direction)))
-       ;; if we’re outside a sub-list, check for the next line
-       ((and (not (string-match ": " (buffer-substring (line-beginning-position) (point))))
-             (< (wisp--current-indent) (wisp--next-indent)))
-        (forward-line)
-        (while (or (wisp--line-empty-or-comment?)
-                   (and (wisp--line-starts-with-period)
-                        (not (string-match ": " (buffer-substring (point) (line-end-position))))
-                        (not (wisp--line-contains-opening-paren)))) ;; if there’s a paren after the point, we need to go there
-          (forward-line))
-        (back-to-indentation)
-        (unless (or (wisp--line-contains-opening-paren)
-                    (and
-                     (string-match ": " (buffer-substring (point) (line-end-position)))
-                     (wisp--line-starts-with-period)))
-          (setq arg (- arg direction))))
-       ;; if in a continuation line (starts with period) the next line is deeper if same indent.
-       ((and (not (string-match ": " (buffer-substring (line-beginning-position) (point))))
-             (wisp--line-starts-with-period)
-             (not (wisp--line-contains-opening-paren))
-             (= (wisp--current-indent) (wisp--next-indent)))
-        (forward-line)
-        (while (or (wisp--line-empty-or-comment?)
-                   (and (wisp--line-starts-with-period)
-                        (not (string-match ": " (buffer-substring (point) (line-end-position))))
-                        (not (wisp--line-contains-opening-paren)))) ;; if there’s a paren after the point, we need to go there
-          (forward-line))
-        (back-to-indentation)
-        (unless (or (wisp--line-contains-opening-paren)
-                    (and
-                     (string-match ": " (buffer-substring (point) (line-end-position)))
-                     (wisp--line-starts-with-period)))
-          (setq arg (- arg direction))))
-       (t (setq can-go-down-p nil))))
-    ;; if there are parentheses in the line, jump into them.
-    (when (/= arg 0)
-      (if (wisp--line-contains-opening-paren)
-        (down-list arg)
-      (user-error "At deepest level")))))
+  (if (< arg 0)
+      (wisp--backward-up-list (- arg))
+    (let ((direction (if (< arg 0) -1 1))
+          (can-go-down-p t))
+      ;; operation outside parens
+      (while (and can-go-down-p
+                  (/= arg 0)
+                  (= (car (syntax-ppss)) 0)
+                  (not (nth 8 (syntax-ppss))))
+        ;; if there’s a colon-sub-list, move into the sublist
+        (cond
+         ((string-match ": " (buffer-substring (point) (line-end-position)))
+          (search-forward ": " (line-end-position))
+          ;; align with start of next symbol
+          (forward-sexp)
+          (backward-sexp)
+          (setq arg (- arg direction)))
+         ;; if we’re outside a sub-list, check for the next line
+         ((and (not (string-match ": " (buffer-substring (line-beginning-position) (point))))
+               (< (wisp--current-indent) (wisp--next-indent)))
+          (forward-line)
+          (while (or (wisp--line-empty-or-comment?)
+                     (and (wisp--line-starts-with-period)
+                          (not (string-match ": " (buffer-substring (point) (line-end-position))))
+                          (not (wisp--line-contains-opening-paren)))) ;; if there’s a paren after the point, we need to go there
+            (forward-line))
+          (back-to-indentation)
+          (unless (or (wisp--line-contains-opening-paren)
+                      (and
+                       (string-match ": " (buffer-substring (point) (line-end-position)))
+                       (wisp--line-starts-with-period)))
+            (setq arg (- arg direction))))
+         ;; if in a continuation line (starts with period) the next line is deeper if same indent.
+         ((and (not (string-match ": " (buffer-substring (line-beginning-position) (point))))
+               (wisp--line-starts-with-period)
+               (not (wisp--line-contains-opening-paren))
+               (= (wisp--current-indent) (wisp--next-indent)))
+          (forward-line)
+          (while (or (wisp--line-empty-or-comment?)
+                     (and (wisp--line-starts-with-period)
+                          (not (string-match ": " (buffer-substring (point) (line-end-position))))
+                          (not (wisp--line-contains-opening-paren)))) ;; if there’s a paren after the point, we need to go there
+            (forward-line))
+          (back-to-indentation)
+          (unless (or (wisp--line-contains-opening-paren)
+                      (and
+                       (string-match ": " (buffer-substring (point) (line-end-position)))
+                       (wisp--line-starts-with-period)))
+            (setq arg (- arg direction))))
+         (t (setq can-go-down-p nil))))
+      ;; if there are parentheses in the line, jump into them.
+      (when (/= arg 0)
+        (if (wisp--line-contains-opening-paren)
+            (down-list arg)
+          (user-error "At deepest level"))))))
+
+(defun wisp--previous-line-has-sublist ()
+  "Check whether the previous line has a sublist with :."
+  (save-mark-and-excursion
+    (forward-line -1)
+    (while (wisp--line-empty-or-comment?)
+      (forward-line -1))
+    (back-to-indentation)
+    (string-match ": " (buffer-substring (point) (line-end-position)))))
+   
+
+(defun wisp--forward-sexp (&optional arg)
+  "Move forward ARG sexps: with indentation or in parens."
+  (interactive "^p")
+  ;; if in parentheses, use forward-sexp
+  (if (/= 0 (car (syntax-ppss)))
+      (forward-sexp arg)
+    (let ((direction (if (< arg 0) -1 1)))
+      (while (/= arg 0)
+        (cond
+         ;; if in the first sublist, move to a following deeper indented line
+         ((and (> arg 0)
+               (looking-back ": +" (line-beginning-position))
+               (not (looking-back ": +.*: +" (line-beginning-position)))
+               (< (wisp--current-indent) (wisp--next-indent)))
+          (wisp--next-regular-line 1)
+          (setq arg (- arg direction)))
+         ;; if backwards and previous line is less indented and has a ": ", move there.
+         ((and (< arg 0)
+               (wisp--previous-line-has-sublist)
+               (> (wisp--current-indent) (wisp--prev-indent)))
+          (wisp--next-code-line -1)
+          (search-forward ": " (line-end-position))
+          (setq arg (- arg direction)))
+         ;; at the start of the line, move to the next with same indentation
+         ((= (current-column) (wisp--current-indent))
+          (wisp--move-to-line-with-same-indent (wisp--current-indent) direction)
+          (setq arg (- arg direction)))
+         ;; after at most one ": ", check for a next line with deeper indentation
+         ;; fallback: error
+         (t (user-error (if (= -1 direction) "No previous sexp" "No next sexp"))))))))
+
+(defun wisp--backward-sexp (&optional arg)
+  "Move forward ARG sexps: with indentation or in parens."
+  (interactive "^p")
+  (wisp--forward-sexp (- arg)))
+
 
 ; use this mode automatically
 ;;;###autoload
@@ -400,7 +474,9 @@ JUSTIFY is the same as in `fill-paragraph'."
   (define-key wisp-mode-map (kbd "<tab>") '("indent line" . wisp--tab))
   (define-key wisp-mode-map (kbd "M-q") '("fill and reindent around point" . wisp--fill-reindent))
   (define-key wisp-mode-map (kbd "C-M-u") '("move sexp up" . wisp--backward-up-list))
-  (define-key wisp-mode-map (kbd "C-M-d") '("move sexp up" . wisp--down-list))
+  (define-key wisp-mode-map (kbd "C-M-d") '("move sexp down" . wisp--down-list))
+  (define-key wisp-mode-map (kbd "C-M-f") '("move sexp forward" . wisp--forward-sexp))
+  (define-key wisp-mode-map (kbd "C-M-b") '("move sexp backward" . wisp--backward-sexp))
   (define-key wisp-mode-map (kbd "<backtab>") '("unindent line" . wisp--backtab))
   (define-key wisp-mode-map "\r" '("wisp newline" . wisp--return))
   (define-key wisp-mode-map (kbd "C-M-x") '("eval block in *shell* buffer" . wisp--eval-block)))
