@@ -313,32 +313,34 @@ JUSTIFY is the same as in `fill-paragraph'."
 (defun wisp--backward-up-list (&optional arg)
   (interactive "^p")
   "Move ARG levels of parentheses or indentation levels up (default: 1)"
-  (let ((direction (if (< arg 0) -1 1)))
-    ;; TODO: if < 0: use down-list
-    ;; in parentheses
-    (while (and (/= arg 0)
-                (/= (car (syntax-ppss)) 0)) ;; in parens?
-      (backward-up-list direction t nil)
-      (setq arg (- arg direction)))
-    ;; outside parens
-    (while (/= arg 0)
-      (let ((ind (current-column)))
-        (cond
-         ((> ind (wisp--current-indent))
-          ;; go backwards to ": " on the same line, else to indentation; ignore the : just before point.
-          (if (string-match ": " (buffer-substring (line-beginning-position) (- (point) 2)))
-              (progn
-                (backward-sexp) ;; avoid hanging at " ^
-                (search-backward ": " (line-beginning-position))
-                ;; align with start of next symbol
-                (forward-sexp 2)
-                (backward-sexp))
-            (back-to-indentation)))
-         ((= ind 0)
-          (user-error "At top level"))
-         ;; previous less indented line
-         (t (wisp--move-to-previous-line-with-indent-lower-than ind)))
-        (setq arg (- arg direction))))))
+  (if (< arg 0)
+      (wisp--down-list (- arg))
+    (let ((direction (if (< arg 0) -1 1)))
+      ;; TODO: if < 0: use down-list
+      ;; in parentheses
+      (while (and (/= arg 0)
+                  (/= (car (syntax-ppss)) 0)) ;; in parens?
+        (backward-up-list direction t nil)
+        (setq arg (- arg direction)))
+      ;; outside parens
+      (while (/= arg 0)
+        (let ((ind (current-column)))
+          (cond
+           ((> ind (wisp--current-indent))
+            ;; go backwards to ": " on the same line, else to indentation; ignore the : just before point.
+            (if (string-match ": " (buffer-substring (line-beginning-position) (- (point) 2)))
+                (progn
+                  (backward-sexp) ;; avoid hanging at " ^
+                  (search-backward ": " (line-beginning-position))
+                  ;; align with start of next symbol
+                  (forward-sexp 2)
+                  (backward-sexp))
+              (back-to-indentation)))
+           ((= ind 0)
+            (user-error "At top level"))
+           ;; previous less indented line
+           (t (wisp--move-to-previous-line-with-indent-lower-than ind)))
+          (setq arg (- arg direction)))))))
 
 (defun wisp--line-contains-opening-paren ()
   "Check whether there is an opening parenthesis in the current line."
