@@ -5,7 +5,7 @@
 ;;               from https://github.com/kwrooijen/indy/blob/master/indy.el
 
 ;; Author: Arne Babenhauserheide <arne_bab@web.de>
-;; Version: 0.4.6
+;; Version: 0.4.7
 ;; Keywords: languages, lisp, scheme
 ;; Homepage: http://www.draketo.de/english/wisp
 ;; Package-Requires: ((emacs "24.4"))
@@ -42,6 +42,7 @@
 ;; 
 ;; ChangeLog:
 ;;
+;;  - 0.4.7: remove stray documentation
 ;;  - 0.4.6: support moving by sexp inside a line and at the end of the line with C-M-f and C-M-b
 ;;  - 0.4.5: implement wisp--forward-sexp (C-M-f) and wisp--backward-sexp (C-M-b) to move within the same depth.
 ;;           wisp--tab (TAB) and wisp--backtab (S-TAB) now operate on the region if it is active
