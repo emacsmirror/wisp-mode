@@ -5,7 +5,7 @@
 ;;               from https://github.com/kwrooijen/indy/blob/master/indy.el
 
 ;; Author: Arne Babenhauserheide <arne_bab@web.de>
-;; Version: 0.4.5
+;; Version: 0.4.6
 ;; Keywords: languages, lisp, scheme
 ;; Homepage: http://www.draketo.de/english/wisp
 ;; Package-Requires: ((emacs "24.4"))
@@ -25,6 +25,26 @@
 
 ;;; Commentary:
 
+;; - highlight current line
+;; - highlight previous same-indented line
+;; - new comands built on paredit: http://danmidwood.com/content/2014/11/21/animated-paredit.html
+;;   sexp-movement plans:
+;;   - general: use indentation-mode if up yields the error "at top level" and (null (nth 8 (syntax-ppss))) (no string or comment); if not in indentation mode, just defer scheme-mode (as now).
+;;   - [√] up/down outside parentheses (move to start of line or previous more indented line / move to more indented line or after colon or into parentheses)
+;;     - [√] up: to beginning of line, or if already: to first ": " or beginning-of-line of the previous non-empty, non-comment line
+;;        - (wisp-prev-indent-lower-than (wisp--current-indent))
+;;     - [√] down: to the next "(" or ": " in the current line or to the next line, if that is indented deeper
+;;   - [√] forward-sexp/backward-sexp specialized within only indentation (next/previous line of same indentation)
+;;     - [√] back: if already at (back-to-indentation), move to the previous line with the same indentation, if the previous line has less indentation, move to the start of its first ": " or its last word.
+;;     - [√ ] forward: if already at (back-to-indentation), move to the next line with the same indentation.
+;;   sexp-editing plans:
+;;   - [√] indent/de-indent region 
+;;   - [ ] wrap (next expression with indentation)
+;;   - [ ] quote selection
+;;   - [ ] slurp (forward/backward), barf (forward/backward): pull/push the next/previous element into/outside the current indentation level
+;; - [ ] Add define-typed integration with a sub-REPL
+;; - [ ] Add symbol information with a sub-REPL
+
 ;; To use, add wisp-mode.el to your Emacs Lisp path and add the following
 ;; to your ~/.emacs or ~/.emacs.d/init.el
 ;; 
@@ -42,6 +62,7 @@
 ;; 
 ;; ChangeLog:
 ;;
+;;  - 0.4.6: support moving by sexp inside a line and at the end of the line with C-M-f and C-M-b
 ;;  - 0.4.5: implement wisp--forward-sexp (C-M-f) and wisp--backward-sexp (C-M-b) to move within the same depth.
 ;;           wisp--tab (TAB) and wisp--backtab (S-TAB) now operate on the region if it is active
 ;;  - 0.4.4: implement wisp--down-list (C-M-d) to move downwards in indentation or parentheses
@@ -159,6 +180,13 @@
 (defun wisp--line-starts-with-period ()
   "Check whether the current line starts with a colon."
   (save-mark-and-excursion
+    (back-to-indentation)
+    (looking-at ". ")))
+
+(defun wisp--next-line-starts-with-period ()
+  "Check whether the current line starts with a colon."
+  (save-mark-and-excursion
+    (wisp--next-regular-line 1)
     (back-to-indentation)
     (looking-at ". ")))
 
@@ -462,22 +490,32 @@ JUSTIFY is the same as in `fill-paragraph'."
                (looking-back ": +" (line-beginning-position))
                (not (looking-back ": +.*: +" (line-beginning-position)))
                (< (wisp--current-indent) (wisp--next-indent)))
-          (wisp--next-regular-line 1)
-          (setq arg (- arg direction)))
+          (wisp--next-regular-line 1))
          ;; if backwards and previous line is less indented and has a ": ", move there.
          ((and (< arg 0)
                (wisp--previous-line-has-sublist)
                (> (wisp--current-indent) (wisp--prev-indent)))
           (wisp--next-code-line -1)
-          (search-forward ": " (line-end-position))
-          (setq arg (- arg direction)))
+          (search-forward ": " (line-end-position)))
          ;; at the start of the line, move to the next with same indentation
          ((= (current-column) (wisp--current-indent))
-          (wisp--move-to-line-with-same-indent (wisp--current-indent) direction)
-          (setq arg (- arg direction)))
-         ;; after at most one ": ", check for a next line with deeper indentation
+          (wisp--move-to-line-with-same-indent (wisp--current-indent) direction))
+         ;; if forward and before the start of a sublist, move to the end of the line
+         ((and (> arg 0) (looking-at " *: +"))
+          (goto-char (line-end-position)))
+         ;; if inside a line, just move forward by sexps
+         ((and (> arg 0) (> (current-column) (wisp--current-indent)) (not (looking-at " *: +")) (not (looking-at " *\\(;.*\\)?$")))
+          (forward-sexp 1))
+         ;; if inside a line and not at the start of a sublist, just move backward by sexps
+         ((and (< arg 0) (> (current-column) (wisp--current-indent)) (not (looking-back ": +" (line-beginning-position))))
+          (forward-sexp -1))
+         ;; at the end of the line, move to the end of the next line, if that has the same indentation and does not continue
+         ((and (> arg 0) (= (wisp--current-indent) (wisp--next-indent)) (looking-at " *\\(;.*\\)?$") (not (wisp--next-line-starts-with-period)))
+          (wisp--next-regular-line 1)
+          (goto-char (line-end-position)))
          ;; fallback: error
-         (t (user-error (if (= -1 direction) "No previous sexp" "No next sexp"))))))))
+         (t (user-error (if (= -1 direction) "No previous sexp" "No next sexp"))))
+        (setq arg (- arg direction))))))
 
 (defun wisp--backward-sexp (&optional arg)
   "Move forward ARG sexps: with indentation or in parens."
