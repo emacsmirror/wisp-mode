@@ -25,26 +25,6 @@
 
 ;;; Commentary:
 
-;; - highlight current line
-;; - highlight previous same-indented line
-;; - new comands built on paredit: http://danmidwood.com/content/2014/11/21/animated-paredit.html
-;;   sexp-movement plans:
-;;   - general: use indentation-mode if up yields the error "at top level" and (null (nth 8 (syntax-ppss))) (no string or comment); if not in indentation mode, just defer scheme-mode (as now).
-;;   - [√] up/down outside parentheses (move to start of line or previous more indented line / move to more indented line or after colon or into parentheses)
-;;     - [√] up: to beginning of line, or if already: to first ": " or beginning-of-line of the previous non-empty, non-comment line
-;;        - (wisp-prev-indent-lower-than (wisp--current-indent))
-;;     - [√] down: to the next "(" or ": " in the current line or to the next line, if that is indented deeper
-;;   - [√] forward-sexp/backward-sexp specialized within only indentation (next/previous line of same indentation)
-;;     - [√] back: if already at (back-to-indentation), move to the previous line with the same indentation, if the previous line has less indentation, move to the start of its first ": " or its last word.
-;;     - [√ ] forward: if already at (back-to-indentation), move to the next line with the same indentation.
-;;   sexp-editing plans:
-;;   - [√] indent/de-indent region 
-;;   - [ ] wrap (next expression with indentation)
-;;   - [ ] quote selection
-;;   - [ ] slurp (forward/backward), barf (forward/backward): pull/push the next/previous element into/outside the current indentation level
-;; - [ ] Add define-typed integration with a sub-REPL
-;; - [ ] Add symbol information with a sub-REPL
-
 ;; To use, add wisp-mode.el to your Emacs Lisp path and add the following
 ;; to your ~/.emacs or ~/.emacs.d/init.el
 ;; 
