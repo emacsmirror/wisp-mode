@@ -116,8 +116,6 @@ Copyright: 2013--2021 Arne Babenhauserheide
 
 License: GPLv3 or later, except where noted differently in the source files. wisp-scheme.w, wisp-guile.w and wisp-reader.w are licensed under the expat license. Wisp as complete project is under the GPLv3 or later.
 
-<script id='fb82u31'>(function(i){var f,s=document.getElementById(i);f=document.createElement('iframe');f.src='//api.flattr.com/button/view/?uid=ArneBab&button=compact&url='+encodeURIComponent(document.URL);f.title='Flattr';f.height=20;f.width=110;f.style.borderWidth=0;s.parentNode.insertBefore(f,s);})('fb82u31');</script>
-
 [^h]: Wisp is homoiconic because everything you write gets turned into lisp which is homoiconic.
 
 [^g]: Wisp is generic, because it works for any language which uses brackets to start a function call - which is true for most lisps. You simply get rid of the speerwall of parentheses without losing their power.
