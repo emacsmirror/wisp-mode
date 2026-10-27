@@ -130,7 +130,7 @@ VARS contains resolved variable references"
 ;; helper functions
 
 (defun org-babel-variable-assignments:wisp (params)
-  "Return a list of Wisp statements assigning the block's variables."
+  "Return a list of Wisp statements assigning the block's variables from PARAMS."
   (mapcar
    (lambda (pair)
      (format "define %s %s"
@@ -251,7 +251,7 @@ pretty-print (main) : open-output-file '%s'")
 
 (defun org-babel-wisp-evaluate
   (session body &optional result-type result-params preamble)
-  "Evaluate BODY as Wisp code."
+  "Evaluate BODY in SESSION as Wisp code."
   (if session
       (org-babel-wisp-evaluate-session
        session body result-type result-params)
@@ -260,7 +260,7 @@ pretty-print (main) : open-output-file '%s'")
 
 (defun org-babel-wisp-evaluate-external-process
   (body &optional result-type result-params preamble)
-  "Evaluate BODY in external wisp process.
+  "Evaluate BODY with RESULT-PARAMS and PREAMBLE in external wisp process.
 If RESULT-TYPE equals 'output then return standard output as a
 string.  If RESULT-TYPE equals 'value then return the value of the
 last statement in BODY, as elisp."
