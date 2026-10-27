@@ -1,4 +1,4 @@
-;;; ob-wisp.el --- Org-babel functions for wisp evaluation  -*- lexical-binding: t; -*-
+;;; ob-wisp.el --- Org-babel functions for wisp evaluation  -*- lexical-binding: nil; -*-
 
 ;; Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
