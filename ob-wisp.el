@@ -9,7 +9,7 @@
 ;; Homepage: http://www.draketo.de/english/wisp
 ;; Package-Requires: ((emacs "26.1"))
 
-;; Version: 0.3
+;; Version: 0.4
 ;; Keywords: languages, lisp
 
 ;; This file is not part of GNU Emacs. It is modified from ob-python.el
