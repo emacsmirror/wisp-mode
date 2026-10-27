@@ -1,10 +1,10 @@
 ;;; ob-wisp.el --- Org-babel functions for wisp evaluation  -*- lexical-binding: nil; -*-
 
-;; Copyright (C) 2009-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2026 Free Software Foundation, Inc.
 
-;; Authors: Eric Schulte
+;; Authors: Arne Babenhauserheide
+;;   Eric Schulte
 ;;	 Dan Davison
-;;   Arne Babenhauserheide
 ;; Keywords: literate programming, reproducible research, languages, lisp, scheme
 ;; Homepage: http://www.draketo.de/english/wisp
 ;; Package-Requires: ((emacs "26.1"))
