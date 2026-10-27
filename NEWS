@@ -1,3 +1,11 @@
+wisp 1.0.14 (2026-10-27):
+- release wisp-mode 0.4.7 and ob-wisp 0.3
+- wisp-mode: added structural movement (C-M-f, C-M-b, C-M-u, C-M-d) and (de-)indenting regions with (S-)TAB
+- wisp-mode: fix: wisp-prev-indent-lower-than must ignore lines in strings and pure comment-lines
+- wisp-mode: fix: lines with only comment are empty and a line with period is not a "next" line but a continuation
+- ob-wisp: fix: variable handling works for lists and tables
+- examples: fix ensemble estimation and benchmark.w
+
 wisp 1.0.13 (2026-05-04):
 - add r7rs benchmark graph example with split geometric std
 - fix: wisp.py missed escaping \ — thanks to leah2! (scheme IRC)
