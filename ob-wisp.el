@@ -62,7 +62,7 @@
 (defcustom org-babel-wisp-mode
   'wisp-mode
   "Preferred wisp mode for use in running wisp interactively.
-This will typically be either 'wisp or 'wisp-mode."
+This will typically be either `wisp' or `wisp-mode'."
   :group 'org-babel
   :version "24.4"
   :package-version '(Org . "8.0")
@@ -261,8 +261,8 @@ pretty-print (main) : open-output-file '%s'")
 (defun org-babel-wisp-evaluate-external-process
   (body &optional result-type result-params preamble)
   "Evaluate BODY with RESULT-PARAMS and PREAMBLE in external wisp process.
-If RESULT-TYPE equals 'output then return standard output as a
-string.  If RESULT-TYPE equals 'value then return the value of the
+If RESULT-TYPE equals `output' then return standard output as a
+string.  If RESULT-TYPE equals `value' then return the value of the
 last statement in BODY, as elisp."
   (let* ((full-body
 	      (org-babel-expand-body:generic body
@@ -296,10 +296,10 @@ last statement in BODY, as elisp."
 (defun org-babel-wisp-evaluate-session
     (session body &optional result-type result-params)
   "Pass BODY to the Wisp process in SESSION.
-If RESULT-TYPE equals 'output then return standard output as a
-string.  If RESULT-TYPE equals 'value then return the value of the
+If RESULT-TYPE equals `output' then return standard output as a
+string.  If RESULT-TYPE equals `value' then return the value of the
 last statement in BODY, as elisp."
-  (let* ((send-wait (lambda () (comint-send-input nil t) (sleep-for 0 5)))
+  (let* ((send-wait (lambda () (comint-send-input nil t) (sleep-for 0)))
 	 (dump-last-value
 	  (lambda
 	    (tmp-file pp)
@@ -321,7 +321,7 @@ last statement in BODY, as elisp."
           (cl-case result-type
             (output
              (mapconcat
-              #'org-babel-trim
+              #'org-trim
               (butlast
                (org-babel-comint-with-output
                    (session org-babel-wisp-eoe-indicator t body)
