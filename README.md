@@ -120,4 +120,4 @@ License: GPLv3 or later, except where noted differently in the source files. wis
 
 [^g]: Wisp is generic, because it works for any language which uses brackets to start a function call - which is true for most lisps. You simply get rid of the speerwall of parentheses without losing their power.
 
-[^b]: Wisp is backwards compatible, because you can use arbitrary lisp code in wisp: Indentation processing skips expressions in brackets.
+[^b]: Wisp is backwards compatible, because you can use arbitrary lisp code in wisp: Indentation processing skips expressions in parentheses.
