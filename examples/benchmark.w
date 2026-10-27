@@ -4,7 +4,6 @@
 if [ -z ${GUILE+x} ]; then
 	GUILE=guile
 fi
-echo ${GUILE}
 "${GUILE}" -L $(dirname $(dirname $(realpath "$0"))) -c '(import (language wisp spec))'
 exec -a "$0" "${GUILE}" -L $(dirname $(dirname $(realpath "$0"))) -x .w --language=wisp -e '(examples benchmark)' -c '' "$@"
 ; !#
@@ -20,6 +19,12 @@ import : statprof
          srfi srfi-43 ; vector-append
          ice-9 pretty-print
          system vm program
+         only : examples ensemble-estimation
+              . EnSRF make-covariance-matrix-with-offdiagonals-using-stds 
+              . standard-deviation-from-deviations x-deviations->y-deviations
+              . x^steps
+         only : ice-9 popen
+              . open-output-pipe close-pipe
 
 
 ;; Define targets for the data aquisition
@@ -343,15 +348,6 @@ define : bench-operation-+++ param-list
             benchmark (+ (+ (+ a b) c) d) :let ((a N)(b m)(c 50)(d 100))
   zip param-list : map f param-list
 
-
-;; prepare a multi-function fit
-import 
-    only : examples ensemble-estimation
-         . EnSRF make-covariance-matrix-with-offdiagonals-using-stds 
-         . standard-deviation-from-deviations x-deviations->y-deviations
-         . x^steps
-    only : ice-9 popen
-         . open-output-pipe close-pipe
 
 define-syntax-rule : or0 test c ...
     if test : begin c ...

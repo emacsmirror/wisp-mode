@@ -68,32 +68,6 @@ define : make-covariance-matrix-with-offdiagonals-using-stds stds
                       ; add smaller off-diag elements
                       * (sqrt (/ 1 dim)) (list-ref stds i) (list-ref stds j)
 
-; TODO: Allow for off-diagonal elements
-define-class <sparse-covariance-matrix> ()
-  trace #:getter get-trace #:init-keyword #:trace
-  zeros #:getter get-zeros #:init-keyword #:zeros
-  stds #:getter get-stds #:init-keyword #:stds
-      . #:allocation #:virtual
-      . #:slot-ref (lambda (o)
-                       (map (lambda (x) (expt x 0.5)) (slot-ref o 'trace)))
-      . #:slot-set! (lambda (o m)
-                       (slot-set! o 'trace (map (lambda (x) (expt x 2)) m))
-                       (slot-set! o 'zeros (list-ec (: i (length m)) 0)))
-
-define-generic list-ref 
-define-method : list-ref (M <sparse-covariance-matrix>) (i <integer>)
-              let
-                : trace : slot-ref M 'trace
-                  zeros : slot-ref M 'zeros
-                append
-                  list-head zeros i
-                  list : list-ref trace i
-                  list-tail zeros : + i 1
-
-define-generic length
-define-method : length (M <sparse-covariance-matrix>)
-                length : slot-ref M 'trace
-
 define : make-covariance-matrix-from-standard-deviations stds
          ; make-diagonal-matrix-with-trace : map (lambda (x) (expt x 2)) stds
          ; make <sparse-covariance-matrix> #:stds stds
@@ -375,7 +349,7 @@ define : main args
                  * {1 / (length y⁰)} : apply + : map (lambda (x) (H x^true x)) y⁰-pos
                  . y⁰-std
       ; now plot the result
-      let : : port : open-output-pipe "python2"
+      let : : port : open-output-pipe "python3"
         format port "import pylab as pl\nimport matplotlib as mpl\n"
         format port "y0 = [float(i) for i in '~A'[1:-1].split(' ')]\n" y⁰
         format port "yerr = ~A\n" y⁰-std
@@ -385,9 +359,9 @@ define : main args
         format port "ytrue = [float(i) for i in '~A'[1:-1].split(' ')]\n" : list-ec (: i y⁰-pos) : H x^true i
         format port "yopt = [float(i) for i in '~A'[1:-1].split(' ')]\n" : list-ec (: i y⁰-pos) : H x-opt i
         format port "yoptstds = [float(i) for i in '~A'[1:-1].split(' ')]\n" y-stds
-        format port "pl.errorbar(*zip(*sorted(zip(ypos, yinit))), yerr=zip(*sorted(zip(ypos, yinitstds)))[1], label='prior')\n"
+        format port "pl.errorbar(*zip(*sorted(zip(ypos, yinit))), yerr=list(zip(*sorted(zip(ypos, yinitstds))))[1], label='prior')\n"
         format port "pl.plot(*zip(*sorted(zip(ypos, ytrue))), label='true')\n"
-        format port "pl.errorbar(*zip(*sorted(zip(ypos, yopt))), yerr=zip(*sorted(zip(ypos, yoptstds)))[1], label='optimized')\n"
+        format port "pl.errorbar(*zip(*sorted(zip(ypos, yopt))), yerr=list(zip(*sorted(zip(ypos, yoptstds))))[1], label='optimized')\n"
         format port "eb=pl.errorbar(*zip(*sorted(zip(ypos, y0))), yerr=yerr, alpha=0.6, marker='+', linewidth=0, label='measurements')\neb[-1][0].set_linewidth(1)\n"
         list-ec (: step 0 (length x^steps) y⁰-plot-skip)
              let : : members : list-ref x^steps (- (length x^steps) step 1)

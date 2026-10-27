@@ -8,7 +8,7 @@
 ;; Keywords: literate programming, reproducible research
 ;; Homepage: http://orgmode.org
 
-;; Version: 0.2
+;; Version: 0.3
 ;; Keywords: languages, lisp
 
 ;; This file is not part of GNU Emacs. It is modified from ob-python.el
@@ -31,6 +31,7 @@
 ;; Org-Babel support for evaluating wisp source code.
 
 ;; ChangeLog:
+;;  - 0.3: fixed variable handling
 ;;  - 0.2: execute works with noweb references
 ;;  - 0.1: search for modules with .w extension
 
@@ -141,7 +142,7 @@ VARS contains resolved variable references"
 Convert an elisp value, VAR, into a string of wisp source code
 specifying a variable of the same value."
   (if (listp var)
-      (concat "list" (mapconcat #'org-babel-wisp-var-to-wisp var " "))
+      (concat "(list " (mapconcat #'org-babel-wisp-var-to-wisp var " ") ")")
     (if (equal var 'hline)
 	org-babel-wisp-hline-to
       (format
