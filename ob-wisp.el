@@ -1,12 +1,13 @@
-;;; ob-wisp.el --- org-babel functions for wisp evaluation
+;;; ob-wisp.el --- Org-babel functions for wisp evaluation  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
 ;; Authors: Eric Schulte
 ;;	 Dan Davison
 ;;   Arne Babenhauserheide
-;; Keywords: literate programming, reproducible research
-;; Homepage: http://orgmode.org
+;; Keywords: literate programming, reproducible research, languages, lisp, scheme
+;; Homepage: http://www.draketo.de/english/wisp
+;; Package-Requires: ((emacs "26.1"))
 
 ;; Version: 0.3
 ;; Keywords: languages, lisp
@@ -38,7 +39,7 @@
 
 ;;; Code:
 (require 'ob)
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 (declare-function org-remove-indentation "org" )
 (declare-function wisp-shell "ext:wisp-mode" (&optional argprompt))
@@ -267,7 +268,7 @@ last statement in BODY, as elisp."
 	      (org-babel-expand-body:generic body
 	       (list) (org-babel-variable-assignments:wisp (list))))
          (raw
-         (case result-type
+         (cl-case result-type
            (output (org-babel-eval org-babel-wisp-command
                                    (concat (if preamble (concat preamble "\n"))
                                            full-body)))
@@ -317,7 +318,7 @@ last statement in BODY, as elisp."
 			     (split-string body "[\r\n]"))
 		       (funcall send-wait)))
          (results
-          (case result-type
+          (cl-case result-type
             (output
              (mapconcat
               #'org-babel-trim
