@@ -7,7 +7,7 @@
 ;;	 Dan Davison
 ;; Keywords: literate programming, reproducible research, languages, lisp, scheme
 ;; Homepage: http://www.draketo.de/english/wisp
-;; Package-Requires: ((emacs "26.1"))
+;; Package-Requires: ((emacs "26.1") (wisp-mode "0.4.7"))
 
 ;; Version: 0.4
 ;; Keywords: languages, lisp
@@ -39,6 +39,8 @@
 
 ;;; Code:
 (require 'ob)
+(require 'org-macs)
+(require 'wisp-mode)
 (eval-when-compile (require 'cl-lib))
 
 (declare-function org-remove-indentation "org" )
