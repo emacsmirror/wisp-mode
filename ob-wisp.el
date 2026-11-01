@@ -4,7 +4,7 @@
 
 ;; Authors: Arne Babenhauserheide
 ;;   Eric Schulte
-;;	 Dan Davison
+;;   Dan Davison
 ;; Keywords: literate programming, reproducible research, languages, lisp, scheme
 ;; Homepage: http://www.draketo.de/english/wisp
 ;; Package-Requires: ((emacs "26.1") (wisp-mode "0.4.7"))
@@ -88,31 +88,31 @@ This will typically be either `wisp' or `wisp-mode'."
   "Execute a block of Wisp code BODY with Babel using PARAMS.
 This function is called by `org-babel-execute-src-block'."
   (let* ((session (org-babel-wisp-initiate-session
-		   (cdr (assoc :session params))))
+           (cdr (assoc :session params))))
          (result-params (cdr (assoc :result-params params)))
          (result-type (cdr (assoc :result-type params)))
-	 (return-val (when (and (eq result-type 'value) (not session))
-		       (cdr (assoc :return params))))
-	 (preamble (cdr (assoc :preamble params)))
+     (return-val (when (and (eq result-type 'value) (not session))
+               (cdr (assoc :return params))))
+     (preamble (cdr (assoc :preamble params)))
      (full-body
-	  (org-babel-expand-body:generic
-	   (concat body (if return-val (format ". %s\n" return-val) "\n"))
-	   params (org-babel-variable-assignments:wisp params)))
+      (org-babel-expand-body:generic
+       (concat body (if return-val (format ". %s\n" return-val) "\n"))
+       params (org-babel-variable-assignments:wisp params)))
          (result (org-babel-wisp-evaluate
-		  session full-body result-type result-params preamble)))
+          session full-body result-type result-params preamble)))
     (org-babel-reassemble-table
      result
      (org-babel-pick-name (cdr (assoc :colname-names params))
-			  (cdr (assoc :colnames params)))
+              (cdr (assoc :colnames params)))
      (org-babel-pick-name (cdr (assoc :rowname-names params))
-			  (cdr (assoc :rownames params))))))
+              (cdr (assoc :rownames params))))))
 
 (defun org-babel-prep-session:wisp (session params)
   "Prepare SESSION according to the header arguments in PARAMS.
 VARS contains resolved variable references"
   (let* ((session (org-babel-wisp-initiate-session session))
-	 (var-lines
-	  (org-babel-variable-assignments:wisp params)))
+     (var-lines
+      (org-babel-variable-assignments:wisp params)))
     (org-babel-comint-in-buffer session
       (mapc (lambda (var)
               (end-of-line 1) (insert var) (comint-send-input)
@@ -136,8 +136,8 @@ VARS contains resolved variable references"
   (mapcar
    (lambda (pair)
      (format "define %s %s"
-	     (car pair)
-	     (org-babel-wisp-var-to-wisp (cdr pair))))
+         (car pair)
+         (org-babel-wisp-var-to-wisp (cdr pair))))
    (org-babel--get-vars params)))
 
 (defun org-babel-wisp-var-to-wisp (var)
@@ -147,7 +147,7 @@ specifying a variable of the same value."
   (if (listp var)
       (concat "(list " (mapconcat #'org-babel-wisp-var-to-wisp var " ") ")")
     (if (equal var 'hline)
-	org-babel-wisp-hline-to
+    org-babel-wisp-hline-to
       (format
        (if (and (stringp var) (string-match "[\n\r]" var)) "\"%S\"" "%S")
        (if (stringp var) (substring-no-properties var) var)))))
@@ -172,15 +172,15 @@ Emacs-lisp table, otherwise return the results as a string."
 (defun org-babel-wisp-with-earmuffs (session)
   (let ((name (if (stringp session) session (format "%s" session))))
     (if (and (string= "*" (substring name 0 1))
-	     (string= "*" (substring name (- (length name) 1))))
-	name
+         (string= "*" (substring name (- (length name) 1))))
+    name
       (format "*%s*" name))))
 
 (defun org-babel-wisp-without-earmuffs (session)
   (let ((name (if (stringp session) session (format "%s" session))))
     (if (and (string= "*" (substring name 0 1))
-	     (string= "*" (substring name (- (length name) 1))))
-	(substring name 1 (- (length name) 1))
+         (string= "*" (substring name (- (length name) 1))))
+    (substring name 1 (- (length name) 1))
       name)))
 
 (defvar wisp-default-interpreter)
@@ -194,39 +194,39 @@ then create.  Return the initialized session."
   (save-window-excursion
     (let* ((session (if session (intern session) :default))
            (wisp-buffer (org-babel-wisp-session-buffer session))
-	   (cmd (if (member system-type '(cygwin windows-nt ms-dos))
-		    (concat org-babel-wisp-command " -i")
-		  org-babel-wisp-command)))
+       (cmd (if (member system-type '(cygwin windows-nt ms-dos))
+            (concat org-babel-wisp-command " -i")
+          org-babel-wisp-command)))
       (cond
        ((and (eq 'wisp-mode org-babel-wisp-mode)
-	     (fboundp 'run-wisp)) ; wisp.el
-	(if (not (version< "24.1" emacs-version))
-	    (run-wisp cmd)
-	  (unless wisp-buffer
-	    (setq wisp-buffer (org-babel-wisp-with-earmuffs session)))
-	  (let ((wisp-shell-buffer-name
-		 (org-babel-wisp-without-earmuffs wisp-buffer)))
-	    (run-wisp cmd))))
+         (fboundp 'run-wisp)) ; wisp.el
+    (if (not (version< "24.1" emacs-version))
+        (run-wisp cmd)
+      (unless wisp-buffer
+        (setq wisp-buffer (org-babel-wisp-with-earmuffs session)))
+      (let ((wisp-shell-buffer-name
+         (org-babel-wisp-without-earmuffs wisp-buffer)))
+        (run-wisp cmd))))
        ((and (eq 'wisp-mode org-babel-wisp-mode)
-	     (fboundp 'wisp-shell)) ; wisp-mode.el
-	;; Make sure that wisp-which-bufname is initialized, as otherwise
-	;; it will be overwritten the first time a Wisp buffer is
-	;; created.
-	(wisp-toggle-shells wisp-default-interpreter)
-	;; `wisp-shell' creates a buffer whose name is the value of
-	;; `wisp-which-bufname' with '*'s at the beginning and end
-	(let* ((bufname (if (and wisp-buffer (buffer-live-p wisp-buffer))
-			    (replace-regexp-in-string ;; zap surrounding *
-			     "^\\*\\([^*]+\\)\\*$" "\\1" wisp-buffer)
-			  (concat "Wisp-" (symbol-name session))))
-	       (wisp-which-bufname bufname))
-	  (wisp-shell)
-	  (setq wisp-buffer (org-babel-wisp-with-earmuffs bufname))))
+         (fboundp 'wisp-shell)) ; wisp-mode.el
+    ;; Make sure that wisp-which-bufname is initialized, as otherwise
+    ;; it will be overwritten the first time a Wisp buffer is
+    ;; created.
+    (wisp-toggle-shells wisp-default-interpreter)
+    ;; `wisp-shell' creates a buffer whose name is the value of
+    ;; `wisp-which-bufname' with '*'s at the beginning and end
+    (let* ((bufname (if (and wisp-buffer (buffer-live-p wisp-buffer))
+                (replace-regexp-in-string ;; zap surrounding *
+                 "^\\*\\([^*]+\\)\\*$" "\\1" wisp-buffer)
+              (concat "Wisp-" (symbol-name session))))
+           (wisp-which-bufname bufname))
+      (wisp-shell)
+      (setq wisp-buffer (org-babel-wisp-with-earmuffs bufname))))
        (t
-	(error "No function available for running an inferior Wisp")))
+    (error "No function available for running an inferior Wisp")))
       (setq org-babel-wisp-buffers
-	    (cons (cons session wisp-buffer)
-		  (assq-delete-all session org-babel-wisp-buffers)))
+        (cons (cons session wisp-buffer)
+          (assq-delete-all session org-babel-wisp-buffers)))
       session)))
 
 (defun org-babel-wisp-initiate-session (&optional session params)
@@ -267,8 +267,8 @@ If RESULT-TYPE equals `output' then return standard output as a
 string.  If RESULT-TYPE equals `value' then return the value of the
 last statement in BODY, as elisp."
   (let* ((full-body
-	      (org-babel-expand-body:generic body
-	       (list) (org-babel-variable-assignments:wisp (list))))
+          (org-babel-expand-body:generic body
+           (list) (org-babel-variable-assignments:wisp (list))))
          (raw
          (cl-case result-type
            (output (org-babel-eval org-babel-wisp-command
@@ -302,23 +302,23 @@ If RESULT-TYPE equals `output' then return standard output as a
 string.  If RESULT-TYPE equals `value' then return the value of the
 last statement in BODY, as elisp."
   (let* ((send-wait (lambda () (comint-send-input nil t) (sleep-for 0)))
-	 (dump-last-value
-	  (lambda
-	    (tmp-file pp)
-	    (mapc
-	     (lambda (statement) (insert statement) (funcall send-wait))
-	     (if pp
-		 (list
-		  "import : ice-9 pretty-print"
-		  (format "pretty-print (main) : open-output-file '%s'"
-			  (org-babel-process-file-name tmp-file 'noquote)))
-	       (list (format "write (main) : open-output-file '%s'"
-			     (org-babel-process-file-name tmp-file
+     (dump-last-value
+      (lambda
+        (tmp-file pp)
+        (mapc
+         (lambda (statement) (insert statement) (funcall send-wait))
+         (if pp
+         (list
+          "import : ice-9 pretty-print"
+          (format "pretty-print (main) : open-output-file '%s'"
+              (org-babel-process-file-name tmp-file 'noquote)))
+           (list (format "write (main) : open-output-file '%s'"
+                 (org-babel-process-file-name tmp-file
                                                           'noquote)))))))
-	 (input-body (lambda (body)
-		       (mapc (lambda (line) (insert line) (funcall send-wait))
-			     (split-string body "[\r\n]"))
-		       (funcall send-wait)))
+     (input-body (lambda (body)
+               (mapc (lambda (line) (insert line) (funcall send-wait))
+                 (split-string body "[\r\n]"))
+               (funcall send-wait)))
          (results
           (cl-case result-type
             (output
@@ -346,7 +346,7 @@ last statement in BODY, as elisp."
                (org-babel-eval-read-file tmp-file))))))
     (unless (string= (substring org-babel-wisp-eoe-indicator 1 -1) results)
       (org-babel-result-cond result-params
-	results
+    results
         (org-babel-wisp-table-or-string results)))))
 
 (defun org-babel-wisp-read-string (string)
@@ -356,7 +356,5 @@ last statement in BODY, as elisp."
     string))
 
 (provide 'ob-wisp)
-
-
 
 ;;; ob-wisp.el ends here
