@@ -32,6 +32,7 @@
 ;; Org-Babel support for evaluating wisp source code.
 
 ;; ChangeLog:
+;;  - 0.4: require and style changes.
 ;;  - 0.3: fixed variable handling
 ;;  - 0.2: execute works with noweb references
 ;;  - 0.1: search for modules with .w extension
