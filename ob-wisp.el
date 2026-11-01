@@ -9,7 +9,7 @@
 ;; Homepage: http://www.draketo.de/english/wisp
 ;; Package-Requires: ((emacs "26.1") (wisp-mode "0.4.7"))
 
-;; Version: 0.4
+;; Version: 0.5
 ;; Keywords: languages, lisp
 
 ;; This file is not part of GNU Emacs. It is modified from ob-python.el
@@ -32,7 +32,8 @@
 ;; Org-Babel support for evaluating wisp source code.
 
 ;; ChangeLog:
-;;  - 0.4: require and style changes.
+;;  - 0.5: require and style changes
+;;  - 0.4: linter fixes
 ;;  - 0.3: fixed variable handling
 ;;  - 0.2: execute works with noweb references
 ;;  - 0.1: search for modules with .w extension
