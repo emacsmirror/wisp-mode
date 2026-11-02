@@ -45,7 +45,7 @@
 (require 'wisp-mode)
 (eval-when-compile (require 'cl-lib))
 
-(declare-function org-remove-indentation "org" )
+(declare-function org-remove-indentation "org-macs" )
 (declare-function wisp-shell "ext:wisp-mode" (&optional argprompt))
 (declare-function wisp-toggle-shells "ext:wisp-mode" (arg))
 (declare-function run-wisp "ext:wisp-mode" (cmd &optional dedicated show))
